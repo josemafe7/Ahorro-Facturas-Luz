@@ -15,7 +15,7 @@ import { formatCents, formatDate } from "@/lib/format";
 import { routes } from "@/lib/routes";
 import { requireUser } from "@/lib/session";
 
-import { StudyStatusSelect } from "../../_components/study-status-select";
+import { StudyStatusControl } from "../../_components/study-status-select";
 import { OffersTable } from "../_components/offers-table";
 import { RecalculateButton } from "../_components/recalculate-button";
 import { StudyHeader } from "../_components/study-header";
@@ -64,7 +64,7 @@ export default async function StudyComparisonPage({ params }: PageProps<"/estudi
         active="comparison"
         action={
           <>
-            <StudyStatusSelect studyId={study.id} status={study.status} />
+            <StudyStatusControl studyId={study.id} status={study.status} hasProposal={study.selectedOfferId !== null} />
             {selected && (
               <a href={routes.studyPdf(study.id)} className={buttonVariants()}>
                 <DownloadIcon aria-hidden />

@@ -1,6 +1,6 @@
 import { FieldMessages } from "@/components/form/number-field";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import type { FormFeedback } from "@/lib/form-state";
+import { fieldId, type FormFeedback } from "@/lib/form-state";
 
 /** Un campo para elegir un color con el selector del propio navegador. */
 export function ColorField({ name, label, value, help, form }: { name: string; label: string; value: string; help?: string; form: FormFeedback }) {
@@ -8,12 +8,12 @@ export function ColorField({ name, label, value, help, form }: { name: string; l
   const initial = (form.submitted?.[name] ?? value).toLowerCase();
   return (
     <Field data-invalid={form.errors[name] ? true : undefined}>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
+      <FieldLabel htmlFor={fieldId(name, form)}>{label}</FieldLabel>
       {/* Dentro de un bloque propio para que el selector conserve su ancho y no ocupe toda la fila. */}
       <div>
         <input
           key={initial}
-          id={name}
+          id={fieldId(name, form)}
           name={name}
           type="color"
           defaultValue={initial}

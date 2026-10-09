@@ -22,6 +22,7 @@ import { ENERGY_PERIODS, POWER_PERIODS, POWER_PRICE_UNIT_LABELS } from "@/sector
 
 import { SAMPLE_INVOICES, SEED_INVOICES, type SampleInvoice } from "./sample-invoices";
 import { invoiceLines } from "./sample-readings";
+import { SAMPLE_TARIFF_SHEET } from "./sample-tariff-sheet";
 
 // Sin esto, la librería parte las palabras con un guion al final de línea.
 Font.registerHyphenationCallback((word) => [word]);
@@ -178,6 +179,44 @@ function invoiceDocument(sample: SampleInvoice) {
   );
 }
 
+/** El tarifario de ejemplo: una tabla de tarifas como la que reparte una comercializadora. */
+function tariffSheetDocument() {
+  const { provider, title, validity, rows, footnote } = SAMPLE_TARIFF_SHEET;
+  const column = (flex: number) => ({ flex, paddingRight: 6 });
+  const cells = [column(2.2), column(1.1), column(2.6), column(3.6), column(2.6)];
+  const headers = ["Tarifa", "Peaje", "Potencia punta · valle (€/kW año)", "Energía (€/kWh)", "Condiciones"];
+
+  return h(
+    Document,
+    { title: `Tarifario ${provider.name}`, author: provider.name, creationDate: new Date("2026-10-01"), modificationDate: new Date("2026-10-01") },
+    h(
+      Page,
+      { size: "A4", orientation: "landscape", style: styles.page },
+      h(
+        View,
+        { style: styles.header },
+        h(View, null, h(Text, { style: [styles.providerName, { color: provider.color }] }, provider.name), h(Text, { style: styles.muted }, title)),
+        h(View, null, h(Text, { style: styles.title }, "TARIFARIO"), h(Text, { style: { textAlign: "right" } }, "Octubre de 2026")),
+      ),
+      h(View, { style: styles.headRow }, ...headers.map((header, index) => h(Text, { key: header, style: [cells[index], styles.muted] }, header))),
+      ...rows.map((row) =>
+        h(
+          View,
+          { style: [styles.row, { paddingVertical: 8 }], key: row.name },
+          h(Text, { style: [cells[0], { fontFamily: "Helvetica-Bold" }] }, row.name),
+          h(Text, { style: cells[1] }, row.access),
+          h(Text, { style: cells[2] }, row.power),
+          h(Text, { style: cells[3] }, row.energy),
+          h(Text, { style: cells[4] }, row.notes),
+        ),
+      ),
+      h(Text, { style: { marginTop: 14 } }, footnote),
+      h(Text, { style: [styles.muted, { marginTop: 6 }] }, validity),
+      h(Text, { style: styles.footer }, "Tarifario de ejemplo inventado para la demo de Estudio de Ahorro. Ni la comercializadora ni sus tarifas son reales."),
+    ),
+  );
+}
+
 /** Convierte un PDF en una foto como la que haría un móvil: algo girada y comprimida. Solo en macOS. */
 function toPhoto(pdf: string, jpg: string): boolean {
   const work = mkdtempSync(path.join(tmpdir(), "factura-foto-"));
@@ -220,6 +259,9 @@ async function generate(sample: SampleInvoice, directory: string) {
 async function main() {
   for (const sample of SAMPLE_INVOICES) await generate(sample, DEMO_DIR);
   for (const sample of SEED_INVOICES) await generate(sample, SEED_DIR);
+
+  await renderToFile(tariffSheetDocument(), path.join(DEMO_DIR, `${SAMPLE_TARIFF_SHEET.file}.pdf`));
+  console.log(`${SAMPLE_TARIFF_SHEET.file}.pdf · ${SAMPLE_TARIFF_SHEET.provider.name} · ${SAMPLE_TARIFF_SHEET.rows.length} tarifas`);
 }
 
 main().catch((error: unknown) => {

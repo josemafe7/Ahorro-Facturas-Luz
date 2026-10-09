@@ -15,8 +15,9 @@ const BYTES_PER_MB = 1024 * 1024;
  * el progreso en su lugar (DESIGN.md). El tipo y el tamaño se comprueban de verdad en el servidor; aquí solo
  * se adelanta el aviso del tamaño para no hacer esperar.
  */
-export function UploadZone({
+export function UploadZone<T>({
   action,
+  onSuccess,
   title,
   hint,
   busyLabel,
@@ -25,8 +26,10 @@ export function UploadZone({
   maxMb,
   children,
 }: {
-  /** La Server Action que recibe el archivo en el campo `file`. Si todo va bien, redirige. */
-  action: (form: FormData) => Promise<Result<unknown>>;
+  /** La Server Action que recibe el archivo en el campo `file`. */
+  action: (form: FormData) => Promise<Result<T>>;
+  /** Si la acción no redirige, lo que hace la pantalla con lo que devuelve. */
+  onSuccess?: (value: T) => void;
   title: string;
   hint: string;
   busyLabel: string;
@@ -52,7 +55,8 @@ export function UploadZone({
     form.set("file", file);
     startTransition(async () => {
       const result = await action(form);
-      if (!result.ok) setError(result.message);
+      if (result.ok) onSuccess?.(result.value);
+      else setError(result.message);
     });
   }
 

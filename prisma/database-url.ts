@@ -10,7 +10,9 @@ const DEFAULT_DATABASE_FILE = "data/dev.db";
  */
 export function databaseUrl(): string {
   const configured = process.env.DATABASE_URL?.replace(/^file:/, "");
-  const file = path.resolve(process.cwd(), configured || DEFAULT_DATABASE_FILE);
+  // El comentario le dice al compilador que este archivo se decide al arrancar: sin él, intentaría
+  // empaquetar el proyecto entero por si acaso.
+  const file = path.resolve(/* turbopackIgnore: true */ process.cwd(), configured || DEFAULT_DATABASE_FILE);
   mkdirSync(path.dirname(file), { recursive: true });
   return `file:${file}`;
 }

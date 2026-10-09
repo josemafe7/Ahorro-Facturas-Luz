@@ -8,7 +8,7 @@
  */
 import type { z } from "zod";
 
-import type { DocumentReading, Reader } from "./reading";
+import type { DocumentReading, OffersReading, Reader } from "./reading";
 
 /** Una línea de un cálculo: qué es, cómo se ha calculado y cuánto da. */
 export type BreakdownLine = {
@@ -69,6 +69,9 @@ export type Sector<TDocument, TOffer, TSettings> = {
   /** Cómo se lee el documento con IA. El tipo de lo que devuelve la IA es cosa del sector. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cada sector define su propio formato de lectura
   documentReader: Reader<any, DocumentReading<TDocument>>;
+  /** Cómo se leen con IA las ofertas de un documento del proveedor, para cargarlas en el catálogo. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cada sector define su propio formato de lectura
+  offersReader: Reader<any, OffersReading<TOffer>>;
   /** Las comprobaciones que no necesitan IA: datos que no cuadran o que no son razonables. */
   findDoubts(draft: Draft<TDocument>): Doubt[];
   /** El total impreso en el documento, si lo trae: sirve para avisar de que el cálculo no cuadra. */

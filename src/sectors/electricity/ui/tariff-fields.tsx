@@ -5,7 +5,8 @@ import { useState } from "react";
 import { FieldMessages, NumberField } from "@/components/form/number-field";
 import { Select } from "@/components/form/select";
 import { TextField } from "@/components/form/text-field";
-import type { FormFeedback } from "@/lib/form-state";
+import type { Draft } from "@/engine/types";
+import { fieldId, type FormFeedback } from "@/lib/form-state";
 import { cn } from "@/lib/utils";
 
 import type { Tariff } from "../schema";
@@ -20,14 +21,15 @@ const ENERGY_KINDS = [
 /** El desplegable con la unidad del precio de la potencia: por día, por mes o por año (regla R4). */
 export function PowerPriceUnitSelect({ value, form }: { value?: string; form: FormFeedback }) {
   const name = "powerPrice.unit";
+  const id = fieldId(name, form);
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={name} className="text-sm font-medium">
+      <label htmlFor={id} className="text-sm font-medium">
         Los precios de la potencia son
       </label>
       <Select
         key={form.submitted?.[name] ?? value ?? "day"}
-        id={name}
+        id={id}
         name={name}
         defaultValue={form.submitted?.[name] ?? value ?? "day"}
         className="w-40"
@@ -44,9 +46,9 @@ export function PowerPriceUnitSelect({ value, form }: { value?: string; form: Fo
   );
 }
 
-/** Los campos de una tarifa de luz 2.0TD de precio fijo. */
-export function TariffFields({ value, form }: { value?: Tariff; form: FormFeedback }) {
-  const [kind, setKind] = useState<string>(form.submitted?.["energyPrice.kind"] ?? value?.energyPrice.kind ?? "single");
+/** Los campos de una tarifa de luz 2.0TD de precio fijo. Vale para una guardada y para una a medio revisar. */
+export function TariffFields({ value, form }: { value?: Draft<Tariff>; form: FormFeedback }) {
+  const [kind, setKind] = useState<string>(form.submitted?.["energyPrice.kind"] ?? value?.energyPrice?.kind ?? "single");
   const energy = value?.energyPrice;
 
   return (
@@ -58,7 +60,7 @@ export function TariffFields({ value, form }: { value?: Tariff; form: FormFeedba
 
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-3 font-medium">Potencia</legend>
-        <PowerPriceUnitSelect value={value?.powerPrice.p1.unit} form={form} />
+        <PowerPriceUnitSelect value={value?.powerPrice?.p1?.unit} form={form} />
         <div className="grid gap-5 md:grid-cols-2">
           {(["p1", "p2"] as const).map((period) => (
             <NumberField
@@ -66,7 +68,7 @@ export function TariffFields({ value, form }: { value?: Tariff; form: FormFeedba
               name={`powerPrice.${period}.amount`}
               label={`Precio en ${POWER_PERIODS[period]}`}
               unit="€/kW"
-              value={value?.powerPrice[period].amount}
+              value={value?.powerPrice?.[period]?.amount}
               form={form}
             />
           ))}

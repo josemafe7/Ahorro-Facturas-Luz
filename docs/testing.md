@@ -51,5 +51,9 @@ Qué se prueba y cómo, para demostrar que el código funciona sin que las prueb
   AI SDK, que se le pasa a la función que lee. En Playwright y para probar a mano sin gastar, con
   `e2e/fake-openrouter.ts`: un servidor que responde como OpenRouter, al que la app se apunta con
   `OPENROUTER_BASE_URL`, y que «lee» las facturas de `ejemplos/`.
-- La lectura real con la IA de las facturas de ejemplo se comprueba a mano, porque cuesta dinero.
+- La lectura real con la IA de las facturas de ejemplo se comprueba a mano con `pnpm ai:check`, porque
+  cuesta dinero: lee cada documento de `ejemplos/` con el modelo de verdad, lo compara con lo que tiene
+  impreso y dice cuánto ha costado.
+- Playwright usa sus propios puertos, su propia base de datos (`data/e2e/`) y la IA simulada: se puede pasar
+  con la app de desarrollo abierta. Los prepara `e2e/prepare-server.mjs` antes de compilar.
 - Cuando el proyecto esté en GitHub, se propone ejecutar las pruebas automáticamente en cada subida.

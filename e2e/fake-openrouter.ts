@@ -3,8 +3,8 @@
  *
  * Es un servidor que responde como OpenRouter. La app se apunta a él con `OPENROUTER_BASE_URL`: no hay
  * ningún «modo de prueba» dentro de la app, que hace exactamente lo mismo que con la IA de verdad. Reconoce
- * las facturas de `ejemplos/` por su contenido y devuelve lo que una IA leería de cada una; ante cualquier
- * otro documento responde que no es una factura.
+ * las facturas y el tarifario de `ejemplos/` por su contenido y devuelve lo que una IA leería de cada uno;
+ * ante cualquier otro documento responde que no es una factura o que no trae tarifas.
  *
  * Para usarlo a mano: `pnpm exec tsx e2e/fake-openrouter.ts` y arrancar la app con
  * `OPENROUTER_API_KEY=simulada OPENROUTER_BASE_URL=http://127.0.0.1:4010`.
@@ -16,8 +16,10 @@ import path from "node:path";
 
 import { SAMPLE_INVOICES } from "../scripts/sample-invoices";
 import { NOT_AN_INVOICE, sampleReading } from "../scripts/sample-readings";
+import { SAMPLE_TARIFF_SHEET, SAMPLE_TARIFF_SHEET_READING } from "../scripts/sample-tariff-sheet";
 
-export const FAKE_OPENROUTER_PORT = 4010;
+/** El puerto en el que escucha. Las pruebas de Playwright usan otro, para no chocar con uno abierto a mano. */
+export const FAKE_OPENROUTER_PORT = Number(process.env.FAKE_OPENROUTER_PORT ?? 4010);
 
 const SAMPLES_DIR = path.resolve("ejemplos");
 
@@ -30,7 +32,15 @@ function readingsByFile(): Map<string, unknown> {
     const file = [".pdf", ".jpg"].map((extension) => path.join(SAMPLES_DIR, sample.file + extension)).find((candidate) => existsSync(candidate));
     if (file) readings.set(sha256(readFileSync(file)), sampleReading(sample));
   }
+  const tariffSheet = path.join(SAMPLES_DIR, `${SAMPLE_TARIFF_SHEET.file}.pdf`);
+  if (existsSync(tariffSheet)) readings.set(sha256(readFileSync(tariffSheet)), SAMPLE_TARIFF_SHEET_READING);
   return readings;
+}
+
+/** Lo que responde ante un documento que no conoce: que no es una factura o que no trae tarifas, según lo pedido. */
+function unknownDocument(body: unknown): unknown {
+  const asksForTariffs = JSON.stringify(body).includes('"tariffs"');
+  return asksForTariffs ? { tariffs: [] } : NOT_AN_INVOICE;
 }
 
 /** Los archivos que vienen dentro de la petición, sea cual sea la forma en que el conector los envíe. */
@@ -66,7 +76,7 @@ export function startFakeOpenRouter(port = FAKE_OPENROUTER_PORT): Promise<Server
           created: 0,
           model: "simulada",
           choices: [
-            { index: 0, finish_reason: "stop", message: { role: "assistant", content: JSON.stringify(reading ?? NOT_AN_INVOICE) } },
+            { index: 0, finish_reason: "stop", message: { role: "assistant", content: JSON.stringify(reading ?? unknownDocument(body)) } },
           ],
           usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, cost: 0 },
         }),

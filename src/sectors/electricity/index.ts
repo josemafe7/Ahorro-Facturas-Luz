@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/format";
 import { findInvoiceDoubts } from "./checks";
 import { calculateBill, type BillInput } from "./formula";
 import { invoiceReader } from "./reading";
+import { tariffsReader } from "./tariff-reading";
 import { invoiceDraftSchema, invoiceSchema, tariffSchema, type Invoice, type Tariff } from "./schema";
 import { DEFAULT_ELECTRICITY_SETTINGS, electricitySettingsSchema, type ElectricitySettings } from "./settings";
 import { toPricePerDay } from "./units";
@@ -36,6 +37,7 @@ export const electricitySector: Sector<Invoice, Tariff, ElectricitySettings> = {
   documentSchema: invoiceSchema,
   draftSchema: invoiceDraftSchema,
   documentReader: invoiceReader,
+  offersReader: tariffsReader,
   offerSchema: tariffSchema,
   settingsSchema: electricitySettingsSchema,
   defaultSettings: DEFAULT_ELECTRICITY_SETTINGS,

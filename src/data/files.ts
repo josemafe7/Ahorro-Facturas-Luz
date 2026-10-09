@@ -25,11 +25,8 @@ export const LOGO_UPLOAD: UploadRules = {
 
 export type StoredFileRef = { id: string; mimeType: string };
 
-/**
- * Comprueba en el servidor el tipo real y el tamaño de un archivo, y lo guarda en la carpeta privada a
- * nombre de su dueño. Lo que no cumple se rechaza y no se guarda nada.
- */
-export async function saveUpload(userId: string, bytes: Uint8Array, rules: UploadRules): Promise<Result<StoredFileRef>> {
+/** Comprueba en el servidor el tipo real y el tamaño de un archivo. Devuelve su tipo si vale. */
+export function checkUpload(bytes: Uint8Array, rules: UploadRules): Result<{ mimeType: string }> {
   if (bytes.byteLength === 0) return { ok: false, message: "El archivo está vacío." };
   if (bytes.byteLength > rules.maxMb * BYTES_PER_MB) {
     return { ok: false, message: `El archivo pasa de ${rules.maxMb} MB. Súbelo más pequeño.` };
@@ -38,6 +35,17 @@ export async function saveUpload(userId: string, bytes: Uint8Array, rules: Uploa
   if (!mimeType || !rules.types.includes(mimeType)) {
     return { ok: false, message: `Ese tipo de archivo no vale. Sube un ${rules.typesLabel}.` };
   }
+  return { ok: true, value: { mimeType } };
+}
+
+/**
+ * Comprueba un archivo y lo guarda en la carpeta privada a nombre de su dueño. Lo que no cumple se rechaza
+ * y no se guarda nada.
+ */
+export async function saveUpload(userId: string, bytes: Uint8Array, rules: UploadRules): Promise<Result<StoredFileRef>> {
+  const checked = checkUpload(bytes, rules);
+  if (!checked.ok) return checked;
+  const { mimeType } = checked.value;
 
   const storageKey = await storeFile(bytes, mimeType);
   const file = await db.storedFile.create({

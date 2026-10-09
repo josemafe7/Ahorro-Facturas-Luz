@@ -10,7 +10,9 @@ import path from "node:path";
  * la sesión y el dueño.
  */
 function storageDir(): string {
-  return path.resolve(process.env.STORAGE_DIR ?? "storage");
+  // El comentario le dice al compilador que esta carpeta se decide al arrancar: sin él, intentaría
+  // empaquetar el proyecto entero por si acaso.
+  return path.resolve(/* turbopackIgnore: true */ process.env.STORAGE_DIR ?? "storage");
 }
 
 /** Los tipos de archivo que la app sabe reconocer, con la extensión con la que los guarda. */
@@ -42,7 +44,7 @@ export function detectFileType(bytes: Uint8Array): string | null {
 
 function filePath(storageKey: string): string {
   if (!STORAGE_KEY.test(storageKey)) throw new Error("Nombre de archivo guardado no válido");
-  return path.join(storageDir(), storageKey);
+  return path.join(/* turbopackIgnore: true */ storageDir(), storageKey);
 }
 
 /** Guarda un archivo con un nombre aleatorio y devuelve ese nombre. */

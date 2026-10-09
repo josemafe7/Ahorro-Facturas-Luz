@@ -4,14 +4,14 @@ import { ChevronDownIcon } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
 import { toast } from "sonner";
 
-import { STATUS_CLASSNAMES, STATUS_LABELS } from "@/components/status-badge";
+import { STATUS_CLASSNAMES, STATUS_LABELS, StatusBadge } from "@/components/status-badge";
 import { STUDY_STATUSES, type StudyStatus } from "@/data/study-status";
 import { cn } from "@/lib/utils";
 
 import { setStudyStatusAction } from "../actions";
 
 /** La etiqueta de estado de un estudio, que además es el desplegable para cambiarlo (regla L2). */
-export function StudyStatusSelect({ studyId, status }: { studyId: string; status: StudyStatus }) {
+function StudyStatusSelect({ studyId, status }: { studyId: string; status: StudyStatus }) {
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(status);
   const [, startTransition] = useTransition();
 
@@ -40,4 +40,12 @@ export function StudyStatusSelect({ studyId, status }: { studyId: string; status
       <ChevronDownIcon className="pointer-events-none absolute right-2 size-3.5" aria-hidden />
     </span>
   );
+}
+
+/**
+ * El estado de un estudio allí donde se enseña. Regla L3: sin una tarifa propuesta solo puede ser borrador,
+ * así que no hay nada que elegir y se ve la etiqueta sola.
+ */
+export function StudyStatusControl({ studyId, status, hasProposal }: { studyId: string; status: StudyStatus; hasProposal: boolean }) {
+  return hasProposal ? <StudyStatusSelect studyId={studyId} status={status} /> : <StatusBadge status={status} />;
 }

@@ -20,6 +20,15 @@ export type DocumentReading<TDocument> = {
   doubts: Doubt[];
 };
 
+/** Una oferta leída de un documento del proveedor, a medio revisar y con sus dudas. */
+export type OfferProposal<TOffer> = {
+  draft: Draft<TOffer>;
+  doubts: Doubt[];
+};
+
+/** Las ofertas que la IA ha encontrado en un documento del proveedor, como un tarifario. */
+export type OffersReading<TOffer> = { offers: OfferProposal<TOffer>[] };
+
 export type ReadableFile = { data: Uint8Array; mediaType: string };
 
 export type ReadingLimits = { timeoutMs: number; maxOutputTokens: number };

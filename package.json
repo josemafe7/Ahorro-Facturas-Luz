@@ -15,7 +15,9 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
-    "samples": "tsx scripts/generate-samples.mts"
+    "samples": "tsx scripts/generate-samples.mts",
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "ai:check": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/check-real-reading.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

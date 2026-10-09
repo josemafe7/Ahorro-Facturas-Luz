@@ -1,4 +1,4 @@
-import { PencilIcon, PlusIcon, TagsIcon } from "lucide-react";
+import { FileUpIcon, PencilIcon, PlusIcon, TagsIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -20,12 +20,19 @@ const { offer: texts } = appConfig.sector.texts;
 
 export const metadata: Metadata = { title: texts.catalogTitle };
 
-function AddOfferLink() {
+/** Las dos formas de cargar tarifas: a mano, que es la acción principal, o leyendo un tarifario. */
+function CatalogActions() {
   return (
-    <Link href={routes.newOffer} className={buttonVariants()}>
-      <PlusIcon aria-hidden />
-      {texts.add}
-    </Link>
+    <>
+      <Link href={routes.importOffers} className={buttonVariants({ variant: "outline" })}>
+        <FileUpIcon aria-hidden />
+        {texts.importTitle}
+      </Link>
+      <Link href={routes.newOffer} className={buttonVariants()}>
+        <PlusIcon aria-hidden />
+        {texts.add}
+      </Link>
+    </>
   );
 }
 
@@ -37,14 +44,22 @@ export default async function CatalogPage() {
     return (
       <>
         <PageHeader title={texts.catalogTitle} />
-        <EmptyState icon={TagsIcon} title={texts.empty} action={<AddOfferLink />} />
+        <EmptyState
+          icon={TagsIcon}
+          title={texts.empty}
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <CatalogActions />
+            </div>
+          }
+        />
       </>
     );
   }
 
   return (
     <>
-      <PageHeader title={texts.catalogTitle} action={<AddOfferLink />} />
+      <PageHeader title={texts.catalogTitle} action={<CatalogActions />} />
       <div className="overflow-x-auto rounded-lg border bg-card">
         <Table>
           <TableHeader>

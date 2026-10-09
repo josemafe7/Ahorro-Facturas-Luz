@@ -5,13 +5,81 @@ minuto; es una muestra de DominIA Academy pensada para adaptarla a otros nichos.
 
 ## Cómo arrancarlo
 
-(Se completa cuando funcione la primera versión: qué hay que tener instalado y los pasos exactos para
-ejecutarla en otro ordenador con los datos de ejemplo.)
+Solo hay que tener instalados [pnpm](https://pnpm.io/installation) (versión 12) y Git. No hace falta crear
+ninguna cuenta: los datos se guardan en un archivo dentro de la propia carpeta, y pnpm se descarga él solo
+la versión de Node.js que usa el proyecto.
+
+```bash
+pnpm install
+```
+
+```bash
+pnpm bootstrap
+```
+
+```bash
+pnpm dev
+```
+
+1. `pnpm install` descarga lo que necesita la app.
+2. `pnpm bootstrap` crea el archivo de claves `.env.local`, la base de datos y los datos de ejemplo. Se
+   puede repetir las veces que haga falta.
+3. `pnpm dev` arranca la app. Se abre en la dirección que sale en la terminal, normalmente
+   `http://localhost:3000`.
+
+Para que la IA lea las facturas hace falta una clave de [OpenRouter](https://openrouter.ai/keys) con algo de
+saldo: leer una factura cuesta menos de un céntimo. Se pone en `.env.local`, en la línea
+`OPENROUTER_API_KEY=`, y se reinicia `pnpm dev`. Sin clave la app funciona igual, pero los datos de cada
+factura se rellenan a mano.
 
 ## Cómo probarla
 
-(Se completa cuando funcione la primera versión: la dirección de la demo, si está publicada, y un usuario
-de prueba de cada tipo, con su contraseña. Solo credenciales de prueba, nunca reales.)
+No está publicada: de momento funciona solo en local. Los datos de ejemplo traen un asesor de prueba:
+
+- Correo: `demo@estudiodeahorro.test`
+- Contraseña: `ahorro-demo-2026`
+
+Son credenciales de prueba, a la vista a propósito. No existen fuera de los datos de ejemplo.
+
+El recorrido de la demo, con los archivos de la carpeta `ejemplos/`:
+
+1. Entra y pulsa «Nuevo estudio».
+2. Sube `factura-1-hogar.pdf`. La IA lee los datos y los enseña junto a la factura.
+3. Revisa los datos y pulsa «Calcular»: la app compara con el catálogo y propone la tarifa que más ahorra.
+4. Pulsa «Descargar PDF»: es el estudio para el cliente, con la marca del asesor.
+5. Vuelve a «Estudios» y cambia el estado del estudio.
+
+Para enseñar más cosas:
+
+- `factura-3-foto.jpg` es una foto: la IA marca un dato como dudoso.
+- `factura-2-con-mantenimiento.pdf` lleva un servicio añadido: la app avisa de que el total no cuadra.
+- `tarifario-cierzo-electrica.pdf` se sube en «Catálogo», con «Subir tarifario»: la IA propone dos tarifas
+  y descarta las otras dos, que no son de precio fijo 2.0TD.
+- En «Ajustes» se cambian los impuestos y la marca que sale en el PDF.
+
+Todo lo que sale en los datos de ejemplo es inventado: las personas, las direcciones, los CUPS y las
+comercializadoras. Cualquier parecido con algo real es casualidad.
+
+## Cómo adaptarla a otro negocio
+
+- El nombre, el logo, los colores y los textos del sector: `src/config/app.ts`. Es el único sitio.
+- El modelo de IA y sus límites: `src/config/ai.ts`.
+- Lo que la app sabe de la luz (qué se lee de una factura, cómo se comprueba y cómo se calcula):
+  `src/sectors/electricity/`. Para otro sector se escribe otro módulo al lado; el resto no se toca. Está
+  explicado en `docs/architecture.md`.
+- Las facturas, el tarifario y los estudios de ejemplo: `scripts/sample-invoices.ts`,
+  `scripts/sample-tariff-sheet.ts` y `prisma/seed/`. Se generan con `pnpm samples`.
+
+## Comandos
+
+- `pnpm dev`: arranca la app en local.
+- `pnpm bootstrap`: deja la app lista en un ordenador nuevo.
+- `pnpm seed`: carga los datos de ejemplo. Nunca donde haya datos reales.
+- `pnpm check`: revisa el código, los tipos y pasa las pruebas, en segundos.
+- `pnpm test:e2e`: compila la app y la recorre con un navegador, con la IA simulada.
+- `pnpm ai:check`: lee las facturas de ejemplo con la IA de verdad y compara. Cuesta céntimos.
+- `pnpm samples`: vuelve a generar las facturas y el tarifario de ejemplo.
+- `pnpm db:migrate`: crea una migración después de cambiar `prisma/schema.prisma`.
 
 ## Cómo se trabaja en este proyecto
 

@@ -24,7 +24,7 @@ export function TextField({ name, label, value, help, form, placeholder, multili
   const state = fieldState(name, form);
   const initial = form.submitted?.[name] ?? value ?? "";
   const shared = {
-    id: name,
+    id: state.id,
     name,
     defaultValue: initial,
     placeholder,
@@ -35,7 +35,7 @@ export function TextField({ name, label, value, help, form, placeholder, multili
 
   return (
     <Field data-invalid={state.invalid}>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
+      <FieldLabel htmlFor={state.id}>{label}</FieldLabel>
       {/* La `key` vuelve a crear el campo cuando cambia su valor inicial, tras guardar o tras un error. */}
       {multiline ? <Textarea key={initial} rows={3} {...shared} /> : <Input key={initial} type={type} autoComplete="off" {...shared} />}
       <FieldMessages name={name} form={form} />

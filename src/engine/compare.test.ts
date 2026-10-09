@@ -31,6 +31,11 @@ const phoneSector: Sector<PhoneBill, PhonePlan, Record<string, never>> = {
   offerSchema: z.object({ operator: z.string(), monthlyFeeCents: z.number() }),
   settingsSchema: z.object({}),
   defaultSettings: {},
+  offersReader: {
+    instructions: "Lee los planes de la operadora.",
+    schema: z.object({ plans: z.array(z.string()) }),
+    interpret: () => ({ offers: [] }),
+  },
   periodDays: (bill) => bill.days,
   currentCost: (bill) => fee(bill.monthlyFeeCents),
   offerCost: (_bill, plan) => fee(plan.monthlyFeeCents),

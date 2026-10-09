@@ -11,7 +11,14 @@ export type FormFeedback = {
   doubts?: Record<string, string>;
   /** Lo que se envió la última vez, tal como se escribió. */
   submitted?: Record<string, string>;
+  /** Si hay varios formularios iguales en una pantalla, lo que distingue los campos de este. */
+  scope?: string;
 };
+
+/** El identificador de un campo en la página. El nombre con el que se envía no cambia. */
+export function fieldId(name: string, form: FormFeedback): string {
+  return form.scope ? `${form.scope}-${name}` : name;
+}
 
 export const NO_FEEDBACK: FormFeedback = { errors: {} };
 

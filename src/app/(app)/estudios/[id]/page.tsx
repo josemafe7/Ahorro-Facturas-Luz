@@ -10,7 +10,7 @@ import { DocumentForm } from "./_components/document-form";
 import { DocumentViewer } from "./_components/document-viewer";
 import { ReadingNotice } from "./_components/reading-notice";
 import { StudyHeader } from "./_components/study-header";
-import { StudyStatusSelect } from "../_components/study-status-select";
+import { StudyStatusControl } from "../_components/study-status-select";
 
 export const metadata: Metadata = { title: appConfig.sector.texts.study.title };
 
@@ -28,7 +28,7 @@ export default async function StudyPage({ params }: PageProps<"/estudios/[id]">)
         studyId={study.id}
         customerName={study.customerName}
         active="data"
-        action={<StudyStatusSelect studyId={study.id} status={study.status} />}
+        action={<StudyStatusControl studyId={study.id} status={study.status} hasProposal={study.selectedOfferId !== null} />}
       />
       <div className="grid gap-6 lg:grid-cols-2">
         {study.file && (

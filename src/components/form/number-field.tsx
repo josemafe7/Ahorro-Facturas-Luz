@@ -4,23 +4,24 @@ import type { ReactNode } from "react";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { formatAmount, formatNumber } from "@/lib/format";
-import type { FormFeedback } from "@/lib/form-state";
+import { fieldId, type FormFeedback } from "@/lib/form-state";
 import { cn } from "@/lib/utils";
 
 /** El mensaje bajo un campo: el error si lo hay (en rojo); si no, la duda (en ámbar). */
 export function FieldMessages({ name, form }: { name: string; form: FormFeedback }) {
   const error = form.errors[name];
   const doubt = form.doubts?.[name];
+  const id = `${fieldId(name, form)}-message`;
   if (error) {
     return (
-      <p id={`${name}-message`} role="alert" className="text-[13px] text-destructive">
+      <p id={id} role="alert" className="text-[13px] text-destructive">
         {error}
       </p>
     );
   }
   if (doubt) {
     return (
-      <p id={`${name}-message`} className="flex items-start gap-1.5 text-[13px] text-warning-foreground">
+      <p id={id} className="flex items-start gap-1.5 text-[13px] text-warning-foreground">
         <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
         {doubt}
       </p>
@@ -34,8 +35,9 @@ export function fieldState(name: string, form: FormFeedback) {
   const error = form.errors[name];
   const doubt = form.doubts?.[name];
   return {
+    id: fieldId(name, form),
     invalid: error ? true : undefined,
-    describedBy: error || doubt ? `${name}-message` : undefined,
+    describedBy: error || doubt ? `${fieldId(name, form)}-message` : undefined,
     className: !error && doubt ? "border-warning bg-warning-soft" : "bg-card",
   };
 }
@@ -70,13 +72,13 @@ export function NumberField({
   const initial = form.submitted?.[name] ?? saved;
   return (
     <Field data-invalid={state.invalid}>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
+      <FieldLabel htmlFor={state.id}>{label}</FieldLabel>
       <div className="flex gap-2">
         <div className="relative min-w-0 flex-1">
           {/* La `key` vuelve a crear el campo cuando cambia su valor inicial, tras guardar o tras un error. */}
           <Input
             key={initial}
-            id={name}
+            id={state.id}
             name={name}
             inputMode="decimal"
             autoComplete="off"

@@ -18,25 +18,35 @@ export function FormShell({
   pendingLabel = "Guardando…",
   cancelHref,
   doubts,
+  scope,
   successMessage,
+  onSuccess,
   children,
 }: {
   action: (state: FormState, form: FormData) => Promise<FormState>;
   submitLabel: string;
   pendingLabel?: string;
   cancelHref?: string;
+  /** Si hay varios formularios iguales en la pantalla, lo que distingue los campos de este. */
+  scope?: string;
   /** Si el formulario se queda en la misma pantalla al guardar, el aviso breve que lo confirma. */
   successMessage?: string;
+  /** Lo que pasa en la pantalla cuando se ha guardado. */
+  onSuccess?: () => void;
   /** Los campos que conviene revisar y por qué (regla R1). */
   doubts?: Record<string, string>;
   children: (feedback: FormFeedback) => ReactNode;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, null);
-  const feedback = { ...(state?.feedback ?? NO_FEEDBACK), doubts };
+  const feedback = { ...(state?.feedback ?? NO_FEEDBACK), doubts, scope };
 
   useEffect(() => {
-    if (state?.ok && successMessage) toast.success(successMessage);
-  }, [state, successMessage]);
+    if (!state?.ok) return;
+    if (successMessage) toast.success(successMessage);
+    onSuccess?.();
+    // Solo cuando llega una respuesta nueva del servidor, no cada vez que cambia la función que avisa.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-6" noValidate>
