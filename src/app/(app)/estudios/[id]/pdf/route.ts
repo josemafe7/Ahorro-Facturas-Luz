@@ -1,18 +1,26 @@
+import { appConfig } from "@/config/app";
 import { getStudyReport } from "@/data/reports";
+import { parseId } from "@/lib/ids";
 import { renderStudyReport } from "@/lib/pdf/study-report-document";
 import { getSessionUser } from "@/lib/session";
 
+const { study: texts } = appConfig.sector.texts;
 const NOT_FOUND = new Response(null, { status: 404 });
 
-/** Un nombre de archivo sin tildes ni espacios: «estudio-marta-soler-vidal.pdf». */
-function fileName(customer: string | undefined): string {
-  const slug = (customer ?? "")
+/** Sin tildes ni espacios, para un nombre de archivo: «Marta Soler Vidal» → «marta-soler-vidal». */
+function slug(text: string): string {
+  return text
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-  return `estudio-${slug || "de-ahorro"}.pdf`;
+}
+
+/** «estudio-marta-soler-vidal.pdf», o «estudio-de-ahorro.pdf» si no se sabe de quién es. */
+function fileName(customer: string | undefined): string {
+  const who = slug(customer ?? "");
+  return `${slug(who ? `${texts.name} ${who}` : texts.title)}.pdf`;
 }
 
 /**
@@ -23,8 +31,8 @@ export async function GET(_request: Request, { params }: RouteContext<"/estudios
   const user = await getSessionUser();
   if (!user) return NOT_FOUND.clone();
 
-  const { id } = await params;
-  const report = await getStudyReport(user.id, id);
+  const id = parseId((await params).id);
+  const report = id ? await getStudyReport(user.id, id) : null;
   if (!report) return NOT_FOUND.clone();
 
   const pdf = await renderStudyReport(report);

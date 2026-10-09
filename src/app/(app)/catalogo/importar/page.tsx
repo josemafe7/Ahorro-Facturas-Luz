@@ -16,7 +16,7 @@ export default async function ImportOffersPage() {
 
   return (
     <>
-      <PageHeader title={texts.importTitle} description="El tarifario no se guarda: solo se usa para leer sus tarifas." />
+      <PageHeader title={texts.importTitle} description={texts.importNote} />
       <OffersImporter accept={DOCUMENT_UPLOAD.types.join(",")} typesLabel={DOCUMENT_UPLOAD.typesLabel} maxMb={DOCUMENT_UPLOAD.maxMb} />
     </>
   );

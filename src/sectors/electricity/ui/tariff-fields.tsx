@@ -2,49 +2,20 @@
 
 import { useState } from "react";
 
-import { FieldMessages, NumberField } from "@/components/form/number-field";
-import { Select } from "@/components/form/select";
+import { NumberField } from "@/components/form/number-field";
 import { TextField } from "@/components/form/text-field";
 import type { Draft } from "@/engine/types";
-import { fieldId, type FormFeedback } from "@/lib/form-state";
+import type { FormFeedback } from "@/lib/form-state";
 import { cn } from "@/lib/utils";
 
 import type { Tariff } from "../schema";
-import { ENERGY_PERIODS, POWER_PERIODS, POWER_PRICE_UNIT_LABELS } from "../texts";
-import { POWER_PRICE_UNITS } from "../units";
+import { ENERGY_PERIODS } from "../texts";
+import { PowerPriceFields } from "./power-price-fields";
 
 const ENERGY_KINDS = [
   { value: "single", label: "Un precio para todo el día" },
   { value: "periods", label: "Un precio por periodo" },
 ] as const;
-
-/** El desplegable con la unidad del precio de la potencia: por día, por mes o por año (regla R4). */
-export function PowerPriceUnitSelect({ value, form }: { value?: string; form: FormFeedback }) {
-  const name = "powerPrice.unit";
-  const id = fieldId(name, form);
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-medium">
-        Los precios de la potencia son
-      </label>
-      <Select
-        key={form.submitted?.[name] ?? value ?? "day"}
-        id={id}
-        name={name}
-        defaultValue={form.submitted?.[name] ?? value ?? "day"}
-        className="w-40"
-      >
-        {POWER_PRICE_UNITS.map((unit) => (
-          <option key={unit} value={unit}>
-            {POWER_PRICE_UNIT_LABELS[unit]}
-          </option>
-        ))}
-      </Select>
-      {/* El error llega con el nombre del dato guardado; la duda, con el del campo del formulario. */}
-      <FieldMessages name={form.errors["powerPrice.p1.unit"] ? "powerPrice.p1.unit" : name} form={form} />
-    </div>
-  );
-}
 
 /** Los campos de una tarifa de luz 2.0TD de precio fijo. Vale para una guardada y para una a medio revisar. */
 export function TariffFields({ value, form }: { value?: Draft<Tariff>; form: FormFeedback }) {
@@ -60,19 +31,7 @@ export function TariffFields({ value, form }: { value?: Draft<Tariff>; form: For
 
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-3 font-medium">Potencia</legend>
-        <PowerPriceUnitSelect value={value?.powerPrice?.p1?.unit} form={form} />
-        <div className="grid gap-5 md:grid-cols-2">
-          {(["p1", "p2"] as const).map((period) => (
-            <NumberField
-              key={period}
-              name={`powerPrice.${period}.amount`}
-              label={`Precio en ${POWER_PERIODS[period]}`}
-              unit="€/kW"
-              value={value?.powerPrice?.[period]?.amount}
-              form={form}
-            />
-          ))}
-        </div>
+        <PowerPriceFields value={value?.powerPrice} form={form} label={(period) => `Precio en ${period}`} />
       </fieldset>
 
       <fieldset className="flex flex-col gap-4">

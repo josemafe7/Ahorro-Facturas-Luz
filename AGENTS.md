@@ -130,12 +130,19 @@ si ha cambiado, avísame y usa lo actual. Instala siempre la última versión es
 
 ## Cómo se arranca y se prueba
 
-Estos comandos los prepara la fase 1. Si alguno cambia, actualiza esta sección.
+Si algún comando cambia, actualiza esta sección.
 
+- `pnpm bootstrap`: deja la app lista en un ordenador nuevo: crea `.env.local`, la base de datos y los datos
+  de ejemplo. Se puede repetir.
 - `pnpm dev`: arranca la app en local.
 - `pnpm check`: lint, tipos y pruebas de Vitest, de una vez y en segundos. Es lo que se pasa al construir.
 - `pnpm test:e2e`: compila la app como en producción y la recorre con Playwright. Se pasa al cerrar la fase.
 - `pnpm seed`: carga los datos de ejemplo y los usuarios de prueba. Nunca donde hay datos reales.
+- `pnpm db:migrate`: crea una migración después de cambiar `prisma/schema.prisma`. Después se reinicia
+  `pnpm dev`.
+- `pnpm samples`: vuelve a generar las facturas y el tarifario de `ejemplos/`.
+- `pnpm ai:check`: lee los documentos de `ejemplos/` con la IA de verdad y compara. Cuesta céntimos: solo
+  cuando yo lo pida.
 
 ## Documentación
 

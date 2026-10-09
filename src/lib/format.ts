@@ -32,13 +32,20 @@ export function formatDate(date: Date | string): string {
   return dateFormat.format(typeof date === "string" ? new Date(date) : date);
 }
 
+/** Miles a la española: grupos de tres cifras detrás de un grupo que no empieza por cero («1.234»). */
+const SPANISH_NUMBER = /^-?([1-9]\d{0,2}(\.\d{3})+|\d+)(,\d+)?$/;
+/** Con punto decimal y sin miles: «0.084» o «93.65». */
+const DOT_DECIMAL_NUMBER = /^-?\d+\.\d+$/;
+
 /**
- * Lee un número escrito a la española: coma para los decimales y, si acaso, punto para los miles.
- * Devuelve `null` si no se entiende. Un punto que no separa miles («0.12») no se acepta: sería adivinar.
+ * Lee un número escrito a mano (regla R6): con coma decimal y, si acaso, punto para los miles («1.234,56»),
+ * o con punto decimal («0.084»), como sale de muchos teclados numéricos. «1.234» es mil doscientos treinta y
+ * cuatro, a la española. Devuelve `null` si no se entiende: no se adivina.
  */
 export function parseNumber(text: string): number | null {
   const clean = text.trim().replace(/\s/g, "");
-  if (!/^-?(\d+|\d{1,3}(\.\d{3})+)(,\d+)?$/.test(clean)) return null;
-  const value = Number(clean.replace(/\./g, "").replace(",", "."));
+  const normalized = SPANISH_NUMBER.test(clean) ? clean.replace(/\./g, "").replace(",", ".") : DOT_DECIMAL_NUMBER.test(clean) ? clean : null;
+  if (normalized === null) return null;
+  const value = Number(normalized);
   return Number.isFinite(value) ? value : null;
 }

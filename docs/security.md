@@ -61,6 +61,9 @@ como una clave filtrada.
   se sube cuando haya una versión publicada con firma. Sus tres piezas (`prisma`, `@prisma/client` y el
   adaptador de SQLite) van siempre en la misma versión exacta, y nunca se instalan con `@latest`, porque esa
   etiqueta apunta ahora a una versión candidata.
+- `mysql2` va forzado a una versión corregida (`overrides` en `pnpm-workspace.yaml`). Lo trae la herramienta
+  de Prisma, que lo fija en una versión con dos fallos conocidos; la app no lo ejecuta, porque usa SQLite. Se
+  quita el forzado cuando Prisma lo actualice.
 - ESLint va en la serie 9, que ya no tiene soporte, porque la configuración de Next.js todavía no funciona
   con la 10. Es una herramienta de desarrollo y no forma parte de la app publicada. Se sube en cuanto
   Next.js lo permita.
@@ -101,6 +104,10 @@ como una clave filtrada.
 - En Better Auth: registro público desactivado, contraseñas guardadas cifradas de forma irreversible, sesión
   en una cookie que el código del navegador no puede leer, y límite de intentos de inicio de sesión activado
   también en desarrollo. Si algún día cualquiera puede registrarse: confirmación de email y CAPTCHA.
+- Better Auth trae unas treinta rutas de cuentas (cambiar la contraseña, el correo o el nombre, listar
+  sesiones…) y las sirve todas si nadie se lo impide. La app solo deja pasar las dos que usa, entrar y salir,
+  en `handleAuthRequest` de `src/lib/auth.ts`: el resto responde como si no existiera. Una prueba recorre
+  todas las que trae la librería, así que una versión nueva no puede abrir otra sin que se note.
 - No se guardan tokens ni datos personales en `localStorage`.
 - Los usuarios de prueba los crea el seed y solo existen en desarrollo y en la demo. En `README.md` solo
   aparecen esas credenciales, nunca unas reales, y en producción no existe ninguno de ellos. Una demo
@@ -109,7 +116,8 @@ como una clave filtrada.
 
 ## Entradas y peticiones
 
-- Zod también valida los `searchParams` y los webhooks, no solo los formularios.
+- Zod también valida los `searchParams` y los webhooks, no solo los formularios, y los identificadores que
+  llegan en una dirección (`src/lib/ids.ts`).
 - Las consultas usan el cliente de Prisma. SQL escrito a mano, solo con las plantillas con parámetros de
   Prisma (`$queryRaw` con comillas invertidas); nunca las variantes `Unsafe` con texto que venga del usuario.
 - React escapa el texto por defecto: `dangerouslySetInnerHTML`, solo con HTML saneado (por ejemplo, con
@@ -129,7 +137,13 @@ como una clave filtrada.
 
 - Los límites de peticiones los pone la propia app, porque no hay una plataforma que lo haga por ella:
   Better Auth limita los intentos de inicio de sesión, y las lecturas de la IA se cuentan por usuario en la
-  base de datos. Cuando se publique, se ponen también en el proxy del servidor.
+  base de datos, contando y apuntando en una misma transacción para que no se cuelen varias a la vez. Cuando
+  se publique, se ponen también en el proxy del servidor.
+- El límite de intentos de inicio de sesión es un único contador para toda la app, no uno por conexión. La
+  dirección de quien llama llega en una cabecera (`x-forwarded-for`) que escribe quien envía la petición:
+  sin un proxy de confianza delante, cambiándola en cada intento se tendría un contador nuevo cada vez. Por
+  eso Better Auth no lee ninguna cabecera (`advanced.ipAddress` en `src/lib/auth.ts`). A cambio, quien llegue
+  a la pantalla de entrada puede bloquear el inicio de sesión de todos durante un minuto.
 - Las llamadas a la IA tienen tope de tokens por petición y de uso por usuario, y la clave de OpenRouter, un
   límite de gasto puesto en su panel.
 - Next.js ya oculta en producción los errores de los Server Components; las Server Actions y los Route
@@ -156,6 +170,11 @@ cuenta.
   dominio.
 - Los límites de peticiones se ponen en el proxy además de en la propia app, porque no hay un firewall de
   plataforma delante.
+- Detrás del proxy, el límite de intentos de inicio de sesión vuelve a ser por conexión: se le dice a Better
+  Auth qué proxy es de confianza (`advanced.ipAddress.trustedProxies`, con la dirección del proxy de Dokploy)
+  para que tome de él la dirección de quien llama. Sin ese paso, en una demo pública cualquiera puede dejar
+  a los demás sin entrar repitiendo intentos.
+- La app escucha solo donde el proxy la alcanza, no en todas las redes del servidor.
 - El servidor solo abre los puertos necesarios, se entra por SSH con clave y no con contraseña, y el sistema
   instala solo sus actualizaciones de seguridad.
 - El panel de Dokploy lleva una contraseña única y se mantiene actualizado: ha tenido fallos críticos.
@@ -243,3 +262,5 @@ Una app publicada se queda vieja aunque nadie la toque. Cuando pida el mantenimi
 | Punto | Motivo | Aprobada por y fecha |
 |---|---|---|
 | La política de confianza de pnpm (`trustPolicy: no-downgrade`) no se aplica a `semver@6.3.1` | Es un parche de seguridad de 2023 de la serie 6, publicado por el equipo de npm sin firma de procedencia cuando la serie 7 ya la llevaba. No existe versión firmada de la serie 6, y la necesita la revisión de código que trae Next.js. Se excluye esa versión exacta y ninguna más. | Josema, 2026-10-09 |
+| `pnpm audit` avisa de un fallo alto en `deepmerge-ts@7.1.5` (GHSA-ggr8-5vv4-36mx) | Lo usa la herramienta de Prisma para leer su configuración, que escribimos nosotros: nadie de fuera le da datos. Prisma lo fija en esa versión, también en su 7.10.0, y el arreglo está en la versión mayor 8, que no admite. No forma parte de la app en marcha. Se revisa en cada mantenimiento y antes de publicar. | Josema, 2026-10-09 |
+| `pnpm audit` avisa de un fallo alto en `braces@3.0.3` (GHSA-vfj7-8cjw-p6xm) | Todavía no existe versión corregida. Lo usan el revisor de código (ESLint) y la herramienta de shadcn para buscar archivos, con patrones escritos por nosotros. No forma parte de la app en marcha. Se revisa en cada mantenimiento y antes de publicar. | Josema, 2026-10-09 |

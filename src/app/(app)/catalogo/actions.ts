@@ -4,17 +4,20 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { appConfig } from "@/config/app";
 import { DOCUMENT_UPLOAD } from "@/data/files";
 import { readOffersDocument, type OffersImport } from "@/data/offer-import";
 import { createOffer, deleteOffer, setOfferActive, updateOffer } from "@/data/offers";
 import { getReadingModel } from "@/lib/ai";
 import { failed, succeeded, type FormState } from "@/lib/form-state";
+import { idSchema } from "@/lib/ids";
 import type { Result } from "@/lib/result";
 import { routes } from "@/lib/routes";
 import { requireUser } from "@/lib/session";
 import { sectorForms } from "@/sectors/forms";
 
-const idSchema = z.string().min(1).max(64);
+const { offer: texts } = appConfig.sector.texts;
+
 const activeSchema = z.object({ id: idSchema, active: z.boolean() });
 
 const INVALID_REQUEST = { ok: false, message: "No se ha podido completar." } as const;
@@ -85,5 +88,5 @@ export async function saveProposedOfferAction(_previous: FormState, form: FormDa
   if (!result.ok) return failed(result.message, form, result.fieldErrors);
 
   revalidatePath(routes.catalog);
-  return succeeded("Tarifa guardada.");
+  return succeeded(texts.saved);
 }

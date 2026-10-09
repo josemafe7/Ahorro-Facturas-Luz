@@ -42,6 +42,11 @@ Qué se prueba y cómo, para demostrar que el código funciona sin que las prueb
 - Mientras se construye se pasa `pnpm check` y solo las pruebas de lo que se está tocando, con la salida
   corta: los fallos y el resumen. `pnpm test:e2e` entero se pasa una vez, al cerrar la fase.
 - Las pruebas no dependen unas de otras ni del orden en que se ejecutan.
+- Cuando una regla dice que algo «se ve», se comprueba que se ve, no el dato que hay detrás. En un formulario,
+  pintándolo a texto con `react-dom/server` y buscando lo que tiene que aparecer (`fields.test.ts`); en el
+  PDF, leyendo su texto con `src/test/pdf.ts`. Las dos cosas van sin navegador.
+- Para probar algo que depende del reloj, como un bloqueo de un minuto, se simula solo el reloj
+  (`vi.useFakeTimers({ toFake: ["Date"] })`): no se espera de verdad.
 - Datos inventados y usuarios de prueba: los del seed (ver `docs/conventions.md`). Las pruebas usan su propio
   archivo de base de datos y su propia carpeta de archivos, que se crean desde las migraciones y el seed
   antes de ejecutarlas y se pueden borrar sin perder nada. Nunca usan el archivo de desarrollo ni uno con

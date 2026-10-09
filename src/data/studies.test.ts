@@ -8,6 +8,7 @@ import { invoiceReading, modelAnswering, modelFailing } from "@/test/ai";
 import { bytesOfSize, EXE_BYTES, PDF_BYTES, PNG_BYTES } from "@/test/files";
 import { createTestAdvisor } from "@/test/users";
 
+import { startAiReading } from "./ai-readings";
 import { getFile } from "./files";
 import { createStudy, getStudy, readStudy, saveStudyDocument } from "./studies";
 
@@ -141,6 +142,29 @@ describe("Leer la factura con IA", () => {
     await db.aiReading.updateMany({ where: { userId: advisor.id }, data: { createdAt: new Date(Date.now() - 2 * 3_600_000) } });
     expect(await readStudy(advisor.id, id, model)).toEqual({ ok: true, value: { status: "read" } });
   });
+
+  it("F12 · el límite aguanta aunque las peticiones lleguen todas a la vez", async () => {
+    const advisor = await createTestAdvisor();
+
+    const admitted = await Promise.all(Array.from({ length: aiConfig.maxReadingsPerHour * 2 }, () => startAiReading(advisor.id)));
+
+    expect(admitted.filter(Boolean)).toHaveLength(aiConfig.maxReadingsPerHour);
+    expect(await db.aiReading.count({ where: { userId: advisor.id } })).toBe(aiConfig.maxReadingsPerHour);
+  });
+
+  it("F13 · una lectura de la IA nunca sustituye datos que el asesor ya ha revisado", async () => {
+    const advisor = await createTestAdvisor();
+    const id = await uploaded(advisor.id);
+    // La IA falla y el asesor rellena los datos a mano y los da por buenos.
+    await readStudy(advisor.id, id, modelFailing());
+    await saveStudyDocument(advisor.id, id, reviewed);
+
+    // Volver a leer ya no se puede: ni se llama a la IA ni se tocan los datos.
+    const model = modelAnswering(invoiceReading({ energyKwhP1: { value: 9999, doubt: "No se lee bien." } }));
+    expect((await readStudy(advisor.id, id, model)).ok).toBe(false);
+    expect(model.doGenerateCalls).toHaveLength(0);
+    expect(await getStudy(advisor.id, id)).toMatchObject({ reviewed: true, doubts: {}, draft: { energyKwh: { p1: 96 } } });
+  });
 });
 
 describe("Revisar los datos", () => {
@@ -161,7 +185,14 @@ describe("Revisar los datos", () => {
     const advisor = await createTestAdvisor();
     const id = await uploaded(advisor.id);
 
-    const result = await saveStudyDocument(advisor.id, id, { ...reviewed, holder: "", days: 0, energyPrice: { p1: 0.215, p2: null, p3: 0.115 } });
+    const result = await saveStudyDocument(advisor.id, id, {
+      ...reviewed,
+      holder: "",
+      days: 0,
+      energyPrice: { p1: 0.215, p2: null, p3: 0.115 },
+      // Tiene forma de fecha, pero ese día no existe.
+      periodStart: "2026-13-45",
+    });
 
     expect(result).toMatchObject({
       ok: false,
@@ -169,6 +200,7 @@ describe("Revisar los datos", () => {
         holder: "Falta el titular",
         days: "Tiene que haber al menos un día facturado",
         "energyPrice.p2": "Escribe el precio",
+        periodStart: "Fecha no válida",
       },
     });
     expect((await getStudy(advisor.id, id))?.reviewed).toBe(false);

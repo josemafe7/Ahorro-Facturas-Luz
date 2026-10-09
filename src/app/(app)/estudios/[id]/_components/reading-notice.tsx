@@ -12,13 +12,13 @@ import type { ReadingStatus } from "@/data/studies";
 
 import { rereadStudyAction } from "../../actions";
 
-const { document: texts } = appConfig.sector.texts;
+const { document: texts, study: studyTexts } = appConfig.sector.texts;
 
 const MANUAL = "Puedes rellenar los datos a mano.";
 
 /** Qué ha pasado con la lectura y qué se puede hacer (reglas F10, F11 y F12). */
 const MESSAGES: Record<Exclude<ReadingStatus, "read">, { title: string; body: string; canRetry: boolean }> = {
-  "not-recognized": { title: texts.notRecognized, body: `${MANUAL} O sube otro documento en un estudio nuevo.`, canRetry: false },
+  "not-recognized": { title: texts.notRecognized, body: `${MANUAL} ${studyTexts.uploadAnother}`, canRetry: false },
   failed: { title: "La IA no ha podido leer el documento.", body: `Vuelve a intentarlo. ${MANUAL}`, canRetry: true },
   limit: {
     title: `Has llegado al límite de ${aiConfig.maxReadingsPerHour} lecturas con IA por hora.`,
@@ -63,6 +63,8 @@ export function ReadingNotice({
   reviewed: boolean;
 }) {
   if (status === null) return null;
+  // Regla F13: con los datos ya revisados, lo que pasó con la lectura no cambia nada y no se puede repetir.
+  if (reviewed && status !== "read") return null;
 
   if (status === "read") {
     if (doubtCount === 0) {

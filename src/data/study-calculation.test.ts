@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { appConfig } from "@/config/app";
 import { mismatchCents, savingOffers } from "@/engine/calculation";
 import { db } from "@/lib/db";
 import { sector } from "@/sectors";
@@ -94,14 +95,30 @@ describe("Calcular y comparar", () => {
     expect(mismatchCents(withoutTotal.calculation!)).toBeNull();
   });
 
-  it("C10 · sin ninguna tarifa activa en el catálogo no hay nada que comparar ni que proponer", async () => {
+  it("C10 · sin ninguna tarifa activa en el catálogo, la app lo dice y no calcula", async () => {
     const advisor = await createTestAdvisor();
-    await setOfferActive(advisor.id, await offer(advisor.id, cheap), false);
+    const offerId = await offer(advisor.id, cheap);
+    await setOfferActive(advisor.id, offerId, false);
+    const created = await createStudy(advisor.id, PDF_BYTES);
+    const id = created.ok ? created.value.id : "";
+    await saveStudyDocument(advisor.id, id, invoice);
 
-    const { calculation, selectedOfferId } = await study(advisor.id, await calculated(advisor.id));
+    expect(await calculateStudy(advisor.id, id)).toEqual({ ok: false, message: appConfig.sector.texts.offer.noneActive });
+    expect(await study(advisor.id, id)).toMatchObject({ calculation: null, selectedOfferId: null, status: "draft" });
 
-    expect(calculation?.offers).toEqual([]);
-    expect(selectedOfferId).toBeNull();
+    // Un estudio ya calculado tampoco se recalcula sin tarifas activas: se queda como estaba…
+    await setOfferActive(advisor.id, offerId, true);
+    await calculateStudy(advisor.id, id);
+    await setStudyStatus(advisor.id, id, "sent");
+    const before = (await study(advisor.id, id)).calculation;
+    await setOfferActive(advisor.id, offerId, false);
+    expect((await calculateStudy(advisor.id, id)).ok).toBe(false);
+    expect(await study(advisor.id, id)).toMatchObject({ calculation: before, selectedOfferId: offerId, status: "sent" });
+
+    // …salvo que el asesor haya cambiado sus datos: aquel cálculo ya no vale y el estudio queda sin calcular.
+    await saveStudyDocument(advisor.id, id, { ...invoice, days: 31 });
+    expect((await calculateStudy(advisor.id, id)).ok).toBe(false);
+    expect(await study(advisor.id, id)).toMatchObject({ calculation: null, selectedOfferId: null, status: "draft" });
   });
 
   it("C11 · cuando ninguna tarifa mejora lo que paga hoy, no se propone ninguna", async () => {

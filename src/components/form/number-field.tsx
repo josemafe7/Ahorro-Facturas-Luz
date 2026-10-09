@@ -43,7 +43,8 @@ export function fieldState(name: string, form: FormFeedback) {
 }
 
 /**
- * Un campo numérico con su unidad dentro, a la derecha. Los números se escriben a la española: con coma.
+ * Un campo numérico con su unidad dentro, a la derecha. Los números se enseñan a la española, con coma, y se
+ * pueden escribir con coma o con punto decimal (regla R6).
  */
 export function NumberField({
   name,
@@ -53,6 +54,7 @@ export function NumberField({
   money = false,
   help,
   form,
+  onChange,
   children,
 }: {
   name: string;
@@ -64,6 +66,8 @@ export function NumberField({
   value?: number | null;
   help?: ReactNode;
   form: FormFeedback;
+  /** Lo que se va escribiendo, por si otra cosa de la pantalla depende de ello. */
+  onChange?: (text: string) => void;
   /** Un control extra pegado al campo, como el desplegable de la unidad. */
   children?: ReactNode;
 }) {
@@ -83,6 +87,7 @@ export function NumberField({
             inputMode="decimal"
             autoComplete="off"
             defaultValue={initial}
+            onChange={onChange && ((event) => onChange(event.target.value))}
             aria-invalid={state.invalid}
             aria-describedby={state.describedBy}
             className={cn("tabular", state.className, unit && "pr-14")}

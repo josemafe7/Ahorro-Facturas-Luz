@@ -41,7 +41,7 @@ export function OffersTable({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="px-4 text-muted-foreground">Tarifa</TableHead>
+            <TableHead className="px-4 text-muted-foreground">{texts.title}</TableHead>
             <TableHead className="px-4 text-right text-muted-foreground">Pagaría</TableHead>
             <TableHead className="px-4 text-right text-muted-foreground">Ahorro al mes</TableHead>
             <TableHead className="px-4 text-right text-muted-foreground">Ahorro al año</TableHead>

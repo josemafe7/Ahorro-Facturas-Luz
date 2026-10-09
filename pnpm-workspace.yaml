@@ -23,3 +23,10 @@ allowBuilds:
   prisma: false
   sharp: false
   unrs-resolver: false
+
+# Versiones forzadas por seguridad (ver «Dependencias» en docs/security.md). Cada una se quita cuando el
+# paquete que la trae use ya una versión corregida.
+overrides:
+  # Prisma fija mysql2 en la 3.15.3, que tiene dos fallos conocidos (GHSA-3f6p-5ww8-9rcr y
+  # GHSA-rgwj-5xj2-c3m3). La app no lo ejecuta, porque usa SQLite: lo trae la herramienta de Prisma.
+  mysql2: ^3.24.5

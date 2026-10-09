@@ -3,12 +3,15 @@ import { describe, expect, it } from "vitest";
 import { appConfig } from "@/config/app";
 import { renderStudyReport } from "@/lib/pdf/study-report-document";
 import { formatDate } from "@/lib/format";
+import { sector } from "@/sectors";
 import { PDF_BYTES, PNG_BYTES } from "@/test/files";
+import { pdfText } from "@/test/pdf";
 import { createTestAdvisor } from "@/test/users";
 
 import { saveBrand, saveBrandLogo } from "./brand";
 import { createOffer } from "./offers";
 import { getStudyReport } from "./reports";
+import { saveSettings } from "./settings";
 import { calculateStudy, createStudy, getStudy, saveStudyDocument } from "./studies";
 
 const invoice = {
@@ -94,6 +97,22 @@ describe("El estudio en PDF", () => {
     expect(report.customer).toContainEqual({ label: "Periodo de la factura", value: "Del 1 sept 2026 al 30 sept 2026 (30 días)" });
     expect(report.notes[0]).toBe(`Estudio calculado el ${formatDate(new Date())} a partir de una factura de 30 días.`);
     expect(report.notes).toContain(appConfig.sector.texts.pdf.projectionNote);
+  });
+
+  it("C5 · cuando se aplica el mínimo del impuesto eléctrico, el PDF también lo dice", async () => {
+    const advisor = await createTestAdvisor();
+    // Con el tipo rebajado al 0,1 %, el porcentaje no llega al mínimo de 1 € por MWh ni hoy ni con la tarifa.
+    expect((await saveSettings(advisor.id, { ...sector.defaultSettings, electricityTaxPercent: 0.1 })).ok).toBe(true);
+    await createOffer(advisor.id, tariff);
+    const created = await createStudy(advisor.id, PDF_BYTES);
+    const id = created.ok ? created.value.id : "";
+    await saveStudyDocument(advisor.id, id, invoice);
+    await calculateStudy(advisor.id, id);
+
+    const text = pdfText(await renderStudyReport((await getStudyReport(advisor.id, id))!));
+
+    expect(text).toContain("Marta Soler Vidal");
+    expect(text).toContain("Se aplica el mínimo legal del impuesto eléctrico.");
   });
 
   it("C11 · cuando ninguna tarifa mejora lo que paga hoy, no se genera el estudio", async () => {

@@ -8,13 +8,13 @@ import { DOCUMENT_UPLOAD } from "@/data/files";
 import { calculateStudy, createStudy, deleteStudy, readStudy, saveStudyDocument, selectStudyOffer, setStudyStatus } from "@/data/studies";
 import { getReadingModel } from "@/lib/ai";
 import { failed, type FormState } from "@/lib/form-state";
+import { idSchema } from "@/lib/ids";
 import type { Result } from "@/lib/result";
 import { routes } from "@/lib/routes";
 import { requireUser } from "@/lib/session";
 import { sectorForms } from "@/sectors/forms";
 
 const BYTES_PER_MB = 1024 * 1024;
-const idSchema = z.string().min(1).max(64);
 const INVALID_REQUEST = { ok: false, message: "No se ha podido completar." } as const;
 
 /**
@@ -59,8 +59,9 @@ export async function saveStudyDocumentAction(id: string, _previous: FormState, 
   const saved = await saveStudyDocument(user.id, parsedId.data, sectorForms.document(form));
   if (!saved.ok) return failed(saved.message, form, saved.fieldErrors);
 
-  const calculated = await calculateStudy(user.id, parsedId.data);
-  if (!calculated.ok) return failed(calculated.message, form);
+  // Si no se puede calcular porque no hay ofertas activas (regla C10), la comparativa lo dice y lleva al
+  // catálogo: por eso se va a ella en los dos casos.
+  await calculateStudy(user.id, parsedId.data);
 
   revalidatePath(routes.studies);
   redirect(routes.studyComparison(parsedId.data));

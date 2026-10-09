@@ -27,9 +27,12 @@ paréntesis identifica la regla en las pruebas.
 - (E2) Cuando el asesor escribe su correo y su contraseña, entra en su lista de estudios. Con un dato
   incorrecto ve «Correo o contraseña incorrectos», sin decir cuál de los dos falla. Al cerrar sesión deja de
   ver sus datos.
-- (E3) Cuando desde una misma conexión se hacen más de 5 intentos de inicio de sesión en un minuto, la app
-  rechaza los siguientes hasta que pasa ese minuto.
+- (E3) Cuando se hacen más de 5 intentos de inicio de sesión en un minuto, la app rechaza los siguientes
+  hasta que pasa ese minuto. El contador es uno solo para toda la app: de qué conexión viene cada intento es
+  un dato que escribe quien lo envía, y cambiándolo se saltaría el límite.
 - (E4) No hay registro: nadie puede crearse una cuenta desde la app.
+- (E5) De las cuentas, la app solo deja entrar y salir. Cambiar la contraseña, el correo o el nombre no se
+  puede hacer desde la app ni llamando directamente a su dirección, tampoco con la sesión iniciada.
 
 ### Subir la factura y leerla
 
@@ -56,6 +59,8 @@ paréntesis identifica la regla en las pruebas.
   borrador se conserva y puede volver a intentarlo o rellenar los datos a mano.
 - (F12) Cada asesor puede pedir como máximo 30 lecturas de IA por hora, entre facturas y tarifarios. Al
   superarlas, la app lo dice y deja seguir a mano.
+- (F13) Una lectura de la IA nunca sustituye datos que el asesor ya ha revisado: volver a leer la factura
+  solo se puede mientras el estudio está sin revisar.
 
 ### Revisar
 
@@ -70,6 +75,9 @@ paréntesis identifica la regla en las pruebas.
   día (el mensual, multiplicado por 12 y dividido entre 365; el anual, dividido entre 365) y enseña la
   conversión.
 - (R5) Todos los precios, los de la factura y los del catálogo, se indican sin impuestos.
+- (R6) Los números se pueden escribir con coma o con punto decimal: «0,084» y «0.084» son lo mismo. El punto
+  solo se toma como separador de miles cuando no cabe duda: grupos de tres cifras detrás de una cifra que no
+  es cero («1.234» son mil doscientos treinta y cuatro). Lo que no se entiende es un error, no se adivina.
 
 ### Calcular y comparar
 
@@ -217,6 +225,8 @@ la app ya terminada va como fase nueva.
   - [x] Tramo 4 · Subir, leer y revisar: la subida a la carpeta privada, la lectura con IA con sus límites y fallos, la pantalla de revisión y las facturas de ejemplo (F1 a F5, F9 a F12, R1, R2, V1, V2, D2).
   - [x] Tramo 5 · Comparativa, estudio y PDF: la comparación con el catálogo y sus avisos, el PDF con la marca del asesor, la lista con sus estados, el borrado y los estudios de ejemplo (C8 a C12, P1 a P5, L1 a L5, T6, A3, A4, D1).
   - [x] Tramo 6 · Tarifario y cierre: las tarifas leídas de un tarifario, el repaso del diseño en todas las pantallas, el recorrido completo con Playwright, `README.md` y `docs/architecture.md` (T5).
+  - [x] Tramo 7 · Arreglos de la revisión: lo que encontró la revisión independiente de la fase. Releer con IA no sustituye datos ya revisados; el límite de intentos de inicio de sesión no se puede saltar y de las cuentas solo quedan abiertas entrar y salir; los números valen con coma o con punto; el límite de lecturas aguanta peticiones a la vez; las dudas y la conversión del precio de la potencia se ven en su campo; sin tarifas activas no se calcula; el PDF dice cuándo se aplica el mínimo del impuesto eléctrico; y todos los textos del sector salen del archivo único (E3, E5, F13, R6, F8, F12, R4, C5, C10, M1).
+  - [ ] Para cerrar la fase: la lectura real con la IA de los documentos de `ejemplos/` (`pnpm ai:check`), que necesita `OPENROUTER_API_KEY` en `.env.local`. Con ella pasada, se marca la fase y se hace el commit de cierre. Quedan además por decidir dos apuntes de estilo de la revisión: `DESIGN.md` dice «una acción principal por pantalla» y el menú lleva «Nuevo estudio» en todas (y Ajustes, dos botones de guardar); y el tamaño de letra de 13 px está escrito en cada pantalla en vez de una vez en el tema.
 - [ ] Fase 2 · Captación y 3.0TD: una página pública donde el cliente sube su factura y deja su contacto, que le llega al asesor como oportunidad; y la tarifa de acceso 3.0TD — se comprueba: sin sesión, subo una factura en la página pública y dejo un contacto, y el asesor la ve como oportunidad y la convierte en estudio; y subo una factura 3.0TD de ejemplo y obtengo su estudio.
 - [ ] Fase 3 · Equipos: varios asesores en una misma cuenta — se comprueba: dos asesores de la misma cuenta ven los mismos estudios y el mismo catálogo, y uno de otra cuenta no ve nada de ellos.
 

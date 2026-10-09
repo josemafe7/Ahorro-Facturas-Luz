@@ -2,7 +2,7 @@ import type { Doubt, Draft } from "@/engine/types";
 import { formatNumber } from "@/lib/format";
 
 import { isValidCups } from "./cups";
-import type { Invoice } from "./schema";
+import { isRealDate, type Invoice } from "./schema";
 import { toPricePerDay, type PowerPrice } from "./units";
 
 const MS_PER_DAY = 86_400_000;
@@ -29,7 +29,14 @@ export function findInvoiceDoubts(draft: Draft<Invoice>): Doubt[] {
     doubts.push({ field: "cups", reason: "Las letras de control no cuadran con las cifras: revisa el CUPS." });
   }
 
-  if (draft.periodStart && draft.periodEnd && draft.days !== undefined) {
+  // Lo que lee la IA puede tener forma de fecha y no existir: se marca, y con ella no se cuentan días.
+  const unrealDates = (["periodStart", "periodEnd"] as const).filter((field) => {
+    const date = draft[field];
+    return date !== undefined && !isRealDate(date);
+  });
+  for (const field of unrealDates) doubts.push({ field, reason: "Esa fecha no existe: revísala." });
+
+  if (unrealDates.length === 0 && draft.periodStart && draft.periodEnd && draft.days !== undefined) {
     const between = daysBetween(draft.periodStart, draft.periodEnd);
     // Hay comercializadoras que cuentan el último día y otras que no.
     if (draft.days !== between && draft.days !== between + 1) {
@@ -52,7 +59,8 @@ export function findInvoiceDoubts(draft: Draft<Invoice>): Doubt[] {
     if (!isComplete(price)) continue;
     const perDay = toPricePerDay(price);
     if (perDay <= 0 || perDay > MAX_REASONABLE_POWER_PRICE_PER_DAY) {
-      doubts.push({ field: `powerPrice.${period}`, reason: unreasonablePrice(perDay, "kW y día") });
+      // El nombre del campo del formulario donde se escribe ese precio: así la duda se ve en su sitio.
+      doubts.push({ field: `powerPrice.${period}.amount`, reason: unreasonablePrice(perDay, "kW y día") });
     }
   }
 

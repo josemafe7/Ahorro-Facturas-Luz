@@ -1,3 +1,4 @@
+import { fill } from "@/lib/fill";
 import { formatDate } from "@/lib/format";
 
 import type { Calculation } from "./calculation";
@@ -21,7 +22,15 @@ export type ReportTexts = {
   proposedLabel: string;
   savingsYearLabel: string;
   savingsMonthLabel: string;
+  /** A qué periodo corresponde cada importe: «en una factura de {dias} días». */
+  periodDetail: string;
+  /** Cuál es la oferta elegida: «Tarifa propuesta: {oferta}». */
+  proposedOffer: string;
   breakdownTitle: string;
+  /** La cabecera de la columna de la oferta en el desglose. */
+  proposedColumn: string;
+  /** De dónde sale la estimación y cuándo se calculó: «… el {fecha} a partir de una factura de {dias} días». */
+  calculatedNote: string;
   projectionNote: string;
   disclaimer: string;
 };
@@ -66,7 +75,7 @@ export function buildStudyReport(input: {
     savings: offer.savings,
     periodDays: calculation.periodDays,
     notes: [
-      `Estudio calculado el ${formatDate(calculation.calculatedAt)} a partir de una factura de ${calculation.periodDays} días.`,
+      fill(texts.calculatedNote, { fecha: formatDate(calculation.calculatedAt), dias: calculation.periodDays }),
       texts.projectionNote,
       texts.disclaimer,
     ],

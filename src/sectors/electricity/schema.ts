@@ -13,7 +13,12 @@ const MAX_CENTS = 10_000_000;
 
 const text = (max: number) => z.string().trim().max(max, `Como mucho ${max} caracteres`);
 const optionalText = (max: number) => text(max).optional();
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha no válida");
+/** Una fecha que existe en el calendario, escrita como AAAA-MM-DD. */
+const isoDate = z.iso.date({ error: "Fecha no válida" });
+
+export function isRealDate(value: string): boolean {
+  return isoDate.safeParse(value).success;
+}
 
 const powerKw = z
   .number({ error: "Escribe la potencia en kW" })

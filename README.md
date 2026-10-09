@@ -62,7 +62,9 @@ comercializadoras. Cualquier parecido con algo real es casualidad.
 
 ## Cómo adaptarla a otro negocio
 
-- El nombre, el logo, los colores y los textos del sector: `src/config/app.ts`. Es el único sitio.
+- El nombre, el logo, los colores y cómo se llaman las cosas del sector (la factura, la comercializadora,
+  la tarifa y el estudio): `src/config/app.ts`. Es el único sitio: una prueba comprueba que ninguna pantalla,
+  ni el PDF, los escribe por su cuenta.
 - El modelo de IA y sus límites: `src/config/ai.ts`.
 - Lo que la app sabe de la luz (qué se lee de una factura, cómo se comprueba y cómo se calcula):
   `src/sectors/electricity/`. Para otro sector se escribe otro módulo al lado; el resto no se toca. Está

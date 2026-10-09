@@ -35,7 +35,7 @@ export function StudyHeader({
         <h1 className="text-xl font-semibold">{customerName ?? texts.new}</h1>
         {action && <div className="flex items-center gap-2">{action}</div>}
       </div>
-      <nav aria-label="Vistas del estudio" className="mt-4 flex gap-6 border-b">
+      <nav aria-label={texts.views} className="mt-4 flex gap-6 border-b">
         {TABS.map(({ key, label, href }) => (
           <Link
             key={key}

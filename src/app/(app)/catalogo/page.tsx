@@ -64,7 +64,7 @@ export default async function CatalogPage() {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="px-4 text-muted-foreground">Tarifa</TableHead>
+              <TableHead className="px-4 text-muted-foreground">{texts.title}</TableHead>
               {offerColumns.map(({ header }) => (
                 <TableHead key={header} className="px-4 text-muted-foreground">
                   {header}

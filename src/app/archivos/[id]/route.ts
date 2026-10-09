@@ -1,4 +1,5 @@
 import { getFile } from "@/data/files";
+import { parseId } from "@/lib/ids";
 import { getSessionUser } from "@/lib/session";
 
 const NOT_FOUND = new Response(null, { status: 404 });
@@ -11,8 +12,8 @@ export async function GET(_request: Request, { params }: RouteContext<"/archivos
   const user = await getSessionUser();
   if (!user) return NOT_FOUND.clone();
 
-  const { id } = await params;
-  const file = await getFile(user.id, id);
+  const id = parseId((await params).id);
+  const file = id ? await getFile(user.id, id) : null;
   if (!file) return NOT_FOUND.clone();
 
   return new Response(new Uint8Array(file.bytes), {

@@ -20,7 +20,7 @@ export function OfferForm({
   return (
     <FormShell action={action} submitLabel={texts.save} cancelHref={routes.catalog}>
       {(feedback) => (
-        <FormSection title="Datos de la tarifa">
+        <FormSection title={texts.formTitle}>
           <OfferFields value={value} form={feedback} />
         </FormSection>
       )}

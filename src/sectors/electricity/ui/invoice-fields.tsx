@@ -8,7 +8,7 @@ import type { FormFeedback } from "@/lib/form-state";
 
 import type { Invoice } from "../schema";
 import { ELECTRICITY_TEXTS, ENERGY_PERIODS, POWER_PERIODS } from "../texts";
-import { PowerPriceUnitSelect } from "./tariff-fields";
+import { PowerPriceFields } from "./power-price-fields";
 
 const CENTS_PER_EURO = 100;
 const euros = (cents: number | undefined) => (cents === undefined ? undefined : cents / CENTS_PER_EURO);
@@ -78,19 +78,7 @@ export function InvoiceFields({ value, form }: { value: Draft<Invoice>; form: Fo
 
       <FormSection title="Precios que paga hoy" description="Sin impuestos, tal como vienen en la factura.">
         <div className="flex flex-col gap-5">
-          <PowerPriceUnitSelect value={value.powerPrice?.p1?.unit} form={form} />
-          <div className="grid gap-5 md:grid-cols-2">
-            {(["p1", "p2"] as const).map((period) => (
-              <NumberField
-                key={period}
-                name={`powerPrice.${period}.amount`}
-                label={`Potencia en ${POWER_PERIODS[period]}`}
-                unit="€/kW"
-                value={value.powerPrice?.[period]?.amount}
-                form={form}
-              />
-            ))}
-          </div>
+          <PowerPriceFields value={value.powerPrice} form={form} label={(period) => `Potencia en ${period}`} />
           <div className="grid gap-5 md:grid-cols-3">
             {(["p1", "p2", "p3"] as const).map((period) => (
               <NumberField

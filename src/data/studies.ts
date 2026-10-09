@@ -4,6 +4,7 @@ import type { LanguageModel } from "ai";
 import { z } from "zod";
 
 import { aiConfig } from "@/config/ai";
+import { appConfig } from "@/config/app";
 import { buildCalculation, calculationSchema, savingOffers, type CalculatedOffer, type Calculation } from "@/engine/calculation";
 import { readWithAi, type DocumentReading } from "@/engine/reading";
 import type { Doubt, Draft } from "@/engine/types";
@@ -18,6 +19,8 @@ import { getSettings } from "./settings";
 import { STUDY_STATUSES, type StudyStatus } from "./study-status";
 
 export { STUDY_STATUSES, type StudyStatus } from "./study-status";
+
+const { texts } = appConfig.sector;
 
 /** Cómo fue la última lectura con IA de un estudio. */
 export const READING_STATUSES = ["read", "not-recognized", "failed", "limit", "not-configured"] as const;
@@ -57,6 +60,7 @@ export type StudyRow = {
 
 /** El mismo mensaje si no existe y si es de otro asesor: no se revela cuál de las dos. */
 const NOT_FOUND = { ok: false, message: "No existe o no es tuyo." } as const;
+const ALREADY_REVIEWED = { ok: false, message: "Ya has revisado estos datos: corrígelos a mano." } as const;
 
 const doubtsSchema = z.record(z.string(), z.string());
 
@@ -89,14 +93,18 @@ export async function createStudy(userId: string, bytes: Uint8Array): Promise<Re
  * Lee con IA la factura de un estudio y deja la propuesta como borrador para revisar (reglas F3, F5 y F9 a
  * F12). `model` es `null` si la app no tiene la IA configurada. Pase lo que pase con la IA, el estudio y su
  * factura se conservan: lo que cambia es `readingStatus`.
+ *
+ * Regla F13: solo se lee mientras el estudio está sin revisar. Lo que el asesor ya ha dado por bueno no lo
+ * sustituye una lectura, porque se calcularía con datos que nadie ha mirado.
  */
 export async function readStudy(
   userId: string,
   id: string,
   model: LanguageModel | null,
 ): Promise<Result<{ status: ReadingStatus }>> {
-  const study = await db.study.findFirst({ where: ownStudy(userId, id), select: { fileId: true } });
+  const study = await db.study.findFirst({ where: ownStudy(userId, id), select: { fileId: true, reviewedAt: true } });
   if (!study?.fileId) return NOT_FOUND;
+  if (study.reviewedAt) return ALREADY_REVIEWED;
 
   const finish = async (status: ReadingStatus, data: { draft?: string; doubts?: string; customerName?: string } = {}) => {
     await db.study.update({ where: { id }, data: { readingStatus: status, ...data } });
@@ -129,11 +137,14 @@ function readingData(reading: DocumentReading<SectorDocument>) {
 }
 
 /**
- * Deja en un estudio una lectura ya hecha, como si la acabara de proponer la IA. Lo usan los datos de
- * ejemplo, que no llaman a la IA.
+ * Deja en un estudio sin revisar una lectura ya hecha, como si la acabara de proponer la IA. Lo usan los
+ * datos de ejemplo, que no llaman a la IA.
  */
 export async function saveStudyReading(userId: string, id: string, reading: DocumentReading<SectorDocument>): Promise<Result<{ id: string }>> {
-  const { count } = await db.study.updateMany({ where: ownStudy(userId, id), data: { readingStatus: "read", ...readingData(reading) } });
+  const { count } = await db.study.updateMany({
+    where: { ...ownStudy(userId, id), reviewedAt: null },
+    data: { readingStatus: "read", ...readingData(reading) },
+  });
   return count === 0 ? NOT_FOUND : { ok: true, value: { id } };
 }
 
@@ -195,6 +206,9 @@ export async function saveStudyDocument(userId: string, id: string, input: unkno
       doubts: JSON.stringify(toDoubts(sector.findDoubts(document))),
       customerName: sector.customerName(document),
       reviewedAt: new Date(),
+      // El cálculo que hubiera salió de otros datos: ya no vale hasta que se vuelva a calcular.
+      calculation: null,
+      ...selection(null),
     },
   });
   return { ok: true, value: { document } };
@@ -222,12 +236,12 @@ function selection(offer: CalculatedOffer | null) {
 /**
  * Calcula un estudio ya revisado contra las tarifas activas del asesor, con sus impuestos de ahora, y guarda
  * el resultado (reglas C8 a C12). Propone la tarifa de mayor ahorro (regla P1); si ninguna ahorra, ninguna,
- * y el estudio vuelve a borrador (regla L3).
+ * y el estudio vuelve a borrador (regla L3). Sin ninguna tarifa activa no calcula nada (regla C10).
  */
 export async function calculateStudy(userId: string, id: string): Promise<Result<{ calculation: Calculation }>> {
   const study = await db.study.findFirst({
     where: ownStudy(userId, id),
-    select: { draft: true, reviewedAt: true, status: true },
+    select: { draft: true, reviewedAt: true, status: true, calculation: true },
   });
   if (!study) return NOT_FOUND;
 
@@ -235,6 +249,12 @@ export async function calculateStudy(userId: string, id: string): Promise<Result
   if (!study.reviewedAt || !document.success) return { ok: false, message: "Revisa y guarda los datos antes de calcular." };
 
   const [offers, settings] = await Promise.all([listActiveOffers(userId), getSettings(userId)]);
+  if (offers.length === 0) {
+    // Regla C10: no se calcula, y lo que hubiera calculado se queda como estaba. Regla L3: si no hay cálculo,
+    // el estudio solo puede ser borrador.
+    if (study.calculation === null) await db.study.update({ where: { id }, data: { status: "draft" } });
+    return { ok: false, message: texts.offer.noneActive };
+  }
   const calculation = buildCalculation(sector, document.data, offers, settings);
   const best = savingOffers(calculation)[0] ?? null;
 
@@ -251,7 +271,7 @@ export async function selectStudyOffer(userId: string, id: string, offerId: stri
   if (!study?.calculation) return NOT_FOUND;
 
   const offer = savingOffers(study.calculation).find((candidate) => candidate.id === offerId);
-  if (!offer) return { ok: false, message: "Esa tarifa no está entre las que ahorran en este estudio." };
+  if (!offer) return { ok: false, message: texts.offer.notSaving };
 
   await db.study.update({ where: { id }, data: selection(offer) });
   return { ok: true, value: { id } };
@@ -265,7 +285,7 @@ export async function setStudyStatus(userId: string, id: string, status: string)
   const study = await db.study.findFirst({ where: ownStudy(userId, id), select: { selectedOfferId: true } });
   if (!study) return NOT_FOUND;
   if (next !== "draft" && !study.selectedOfferId) {
-    return { ok: false, message: "Calcula el estudio antes de cambiar su estado." };
+    return { ok: false, message: texts.study.calculateFirst };
   }
 
   await db.study.update({ where: { id }, data: { status: next } });

@@ -19,6 +19,9 @@ const MAX_UPLOAD_SIZE = "11mb";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // La app se enseña en directo con `pnpm dev`: sin el indicador de Next.js, que tapa el pie del menú. Los
+  // errores se siguen viendo en pantalla.
+  devIndicators: false,
   experimental: {
     serverActions: { bodySizeLimit: MAX_UPLOAD_SIZE },
     proxyClientMaxBodySize: MAX_UPLOAD_SIZE,

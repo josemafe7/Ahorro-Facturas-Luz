@@ -62,67 +62,70 @@ export default async function StudiesPage() {
     <>
       <PageHeader title={texts.plural} action={<NewStudyButton />} />
 
-      {/* En móvil la tabla no cabe: cada estudio es una tarjeta con los mismos datos. */}
-      <ul className="flex flex-col gap-3 md:hidden">
-        {studies.map((study) => (
-          <li key={study.id} className="rounded-lg border bg-card p-4">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <StudyLink study={study} />
-                <p className="mt-0.5 text-[13px] text-muted-foreground">
-                  {formatDate(study.createdAt)}
-                  {study.proposedOffer && ` · ${study.proposedOffer}`}
+      {/* La tabla necesita su ancho: donde no cabe (el móvil, una ventana estrecha) cada estudio es una tarjeta
+          con los mismos datos. Se decide por el hueco que hay, no por el tamaño de la pantalla. */}
+      <div className="@container">
+        <ul className="grid gap-3 @2xl:grid-cols-2 @4xl:hidden">
+          {studies.map((study) => (
+            <li key={study.id} className="rounded-lg border bg-card p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <StudyLink study={study} />
+                  <p className="mt-0.5 text-[13px] text-muted-foreground">
+                    {formatDate(study.createdAt)}
+                    {study.proposedOffer && ` · ${study.proposedOffer}`}
+                  </p>
+                </div>
+                <div className="-mt-1.5 -mr-2 shrink-0">
+                  <DeleteStudyButton id={study.id} customerName={study.customerName} />
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <StudyStatusControl studyId={study.id} status={study.status} hasProposal={study.proposedOffer !== null} />
+                <p className="text-[13px] text-muted-foreground">
+                  Ahorro al año <YearSavings cents={study.yearSavingsCents} />
                 </p>
               </div>
-              <div className="-mt-1.5 -mr-2 shrink-0">
-                <DeleteStudyButton id={study.id} customerName={study.customerName} />
-              </div>
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <StudyStatusControl studyId={study.id} status={study.status} hasProposal={study.proposedOffer !== null} />
-              <p className="text-[13px] text-muted-foreground">
-                Ahorro al año <YearSavings cents={study.yearSavingsCents} />
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
 
-      <div className="hidden overflow-x-auto rounded-lg border bg-card md:block">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="px-4 text-muted-foreground">{texts.customer}</TableHead>
-              <TableHead className="px-4 text-muted-foreground">Fecha</TableHead>
-              <TableHead className="px-4 text-muted-foreground">{offerTexts.proposed}</TableHead>
-              <TableHead className="px-4 text-right text-muted-foreground">Ahorro al año</TableHead>
-              <TableHead className="px-4 text-muted-foreground">Estado</TableHead>
-              <TableHead className="px-4">
-                <span className="sr-only">Acciones</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {studies.map((study) => (
-              <TableRow key={study.id} className="h-12">
-                <TableCell className="px-4">
-                  <StudyLink study={study} />
-                </TableCell>
-                <TableCell className="px-4 text-muted-foreground">{formatDate(study.createdAt)}</TableCell>
-                <TableCell className="px-4">{study.proposedOffer ?? <span className="text-muted-foreground">—</span>}</TableCell>
-                <TableCell className="px-4 text-right">
-                  <YearSavings cents={study.yearSavingsCents} />
-                </TableCell>
-                <TableCell className="px-4">
-                  <StudyStatusControl studyId={study.id} status={study.status} hasProposal={study.proposedOffer !== null} />
-                </TableCell>
-                <TableCell className="px-4 text-right">
-                  <DeleteStudyButton id={study.id} customerName={study.customerName} />
-                </TableCell>
+        <div className="hidden overflow-x-auto rounded-lg border bg-card @4xl:block">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="px-4 text-muted-foreground">{texts.customer}</TableHead>
+                <TableHead className="px-4 text-muted-foreground">Fecha</TableHead>
+                <TableHead className="px-4 text-muted-foreground">{offerTexts.proposed}</TableHead>
+                <TableHead className="px-4 text-right text-muted-foreground">Ahorro al año</TableHead>
+                <TableHead className="px-4 text-muted-foreground">Estado</TableHead>
+                <TableHead className="px-4">
+                  <span className="sr-only">Acciones</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {studies.map((study) => (
+                <TableRow key={study.id} className="h-12">
+                  <TableCell className="px-4">
+                    <StudyLink study={study} />
+                  </TableCell>
+                  <TableCell className="px-4 text-muted-foreground">{formatDate(study.createdAt)}</TableCell>
+                  <TableCell className="px-4">{study.proposedOffer ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                  <TableCell className="px-4 text-right">
+                    <YearSavings cents={study.yearSavingsCents} />
+                  </TableCell>
+                  <TableCell className="px-4">
+                    <StudyStatusControl studyId={study.id} status={study.status} hasProposal={study.proposedOffer !== null} />
+                  </TableCell>
+                  <TableCell className="px-4 text-right">
+                    <DeleteStudyButton id={study.id} customerName={study.customerName} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </>
   );

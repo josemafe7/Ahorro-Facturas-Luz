@@ -5,8 +5,11 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { appConfig } from "@/config/app";
 
 import { recalculateStudyAction } from "../../actions";
+
+const { study: texts } = appConfig.sector.texts;
 
 /** Vuelve a calcular el estudio con el catálogo y los impuestos de ahora (regla C12). */
 export function RecalculateButton({ studyId }: { studyId: string }) {
@@ -15,7 +18,7 @@ export function RecalculateButton({ studyId }: { studyId: string }) {
   function handleClick() {
     startTransition(async () => {
       const result = await recalculateStudyAction(studyId);
-      if (result.ok) toast.success("Estudio recalculado.");
+      if (result.ok) toast.success(texts.recalculated);
       else toast.error(result.message);
     });
   }

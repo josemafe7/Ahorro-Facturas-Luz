@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { appConfig } from "@/config/app";
 import { getOffer } from "@/data/offers";
+import { parseId } from "@/lib/ids";
 import { requireUser } from "@/lib/session";
 
 import { OfferForm } from "../_components/offer-form";
@@ -15,10 +16,10 @@ export const metadata: Metadata = { title: texts.edit };
 
 export default async function EditOfferPage({ params }: PageProps<"/catalogo/[id]">) {
   const user = await requireUser();
-  const { id } = await params;
+  const id = parseId((await params).id);
 
   // Si no existe o es de otro asesor, la misma pantalla de «no encontrado».
-  const row = await getOffer(user.id, id);
+  const row = id ? await getOffer(user.id, id) : null;
   if (!row) notFound();
 
   return (

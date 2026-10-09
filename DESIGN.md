@@ -69,8 +69,9 @@ dudoso lleva además un icono y su motivo escrito, y un estado lleva su nombre.
 - Espaciado en múltiplos de 4 px: 8 px entre un campo y su etiqueta, 16 px entre campos, 24 px entre bloques.
 - La revisión de datos va a dos columnas: la factura original a la izquierda, que se queda fija al bajar, y
   el formulario a la derecha. En móvil, la factura queda arriba y plegable.
-- Las listas son tablas. En móvil, la de estudios pasa a una tarjeta por estudio con los mismos datos; las
-  demás tablas se desplazan de lado dentro de su recuadro, sin mover la pantalla.
+- Las listas son tablas. Donde no cabe (en el móvil o en una ventana estrecha), la de estudios pasa a una
+  tarjeta por estudio con los mismos datos; las demás tablas se desplazan de lado dentro de su recuadro, sin
+  mover la pantalla.
 - Los formularios van por bloques con título (cliente y suministro, potencia, consumo, precios), con dos o
   tres campos por fila en ordenador y uno en móvil.
 - El PDF es un A4 vertical de una página, o dos si el desglose no cabe: cabecera con la marca del asesor,

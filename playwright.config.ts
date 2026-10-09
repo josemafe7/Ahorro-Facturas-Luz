@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import { defineConfig, devices } from "@playwright/test";
 
 /**
@@ -12,7 +14,8 @@ const appEnv = {
   DATABASE_URL: "file:./data/e2e/e2e.db",
   STORAGE_DIR: "./data/e2e/storage",
   BETTER_AUTH_URL: baseURL,
-  BETTER_AUTH_SECRET: "clave-solo-para-las-pruebas-con-navegador",
+  // Una clave de sesiones nueva en cada ejecución: en el código no se escribe ninguna.
+  BETTER_AUTH_SECRET: randomBytes(32).toString("base64"),
   // La app se apunta a la IA simulada: no hay ningún modo de prueba dentro de ella.
   OPENROUTER_API_KEY: "simulada",
   OPENROUTER_BASE_URL: `http://127.0.0.1:${FAKE_AI_PORT}`,

@@ -31,4 +31,29 @@ describe("M1 · la marca sale de un único archivo", () => {
 
     expect(offenders.map((file) => path.relative(SOURCE_DIR, file))).toEqual([]);
   });
+
+  it("fuera del módulo del sector, ningún archivo escribe cómo se llaman el documento, el proveedor, la oferta y el estudio", () => {
+    const { document, provider, offer, study } = appConfig.sector.texts;
+    const names = [document.name, provider.name, offer.name, study.name].map((name) => name.toLowerCase());
+    // El módulo del sector es lo que se reescribe para otro negocio, y las direcciones de la app no son textos.
+    const allowed = [path.join(SOURCE_DIR, "sectors") + path.sep, path.join(SOURCE_DIR, "lib", "routes.ts")];
+
+    const offenders = sourceFiles(SOURCE_DIR)
+      .filter((file) => !allowed.some((prefix) => file.startsWith(prefix)))
+      .flatMap((file) => {
+        const written = withoutCommentsNorRoutes(readFileSync(file, "utf8")).toLowerCase();
+        const found = names.filter((name) => written.includes(name));
+        return found.length > 0 ? [`${path.relative(SOURCE_DIR, file)}: ${found.join(", ")}`] : [];
+      });
+
+    expect(offenders).toEqual([]);
+  });
 });
+
+/** El código sin sus comentarios, que pueden hablar de lo que quieran, y sin los tipos que nombran una ruta. */
+function withoutCommentsNorRoutes(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/.*$/gm, "$1")
+    .replace(/\b(PageProps|RouteContext|LayoutProps)<"[^"]*">/g, "");
+}

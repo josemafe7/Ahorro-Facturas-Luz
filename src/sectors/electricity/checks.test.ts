@@ -31,13 +31,15 @@ describe("Comprobaciones de una factura sin IA", () => {
     expect(doubtfulFields({ ...period, days: 29 })).toEqual([]);
     expect(doubtfulFields({ ...period, days: 30 })).toEqual([]);
     expect(doubtfulFields({ ...period, days: 61 })).toEqual(["days"]);
+    // Una fecha que no existe se marca ella, y no se cuentan días con ella.
+    expect(doubtfulFields({ periodStart: "2026-13-45", periodEnd: "2026-09-30", days: 30 })).toEqual(["periodStart"]);
   });
 
   it("F8 · marca como dudoso un precio de 0 o disparatado", () => {
     expect(doubtfulFields({ energyPrice: { p1: 0.215, p2: 0, p3: 1.5 } })).toEqual(["energyPrice.p2", "energyPrice.p3"]);
     // 400 € por kW y año son 1,09 € por kW y día.
     expect(doubtfulFields({ powerPrice: { p1: { amount: 45, unit: "year" }, p2: { amount: 400, unit: "year" } } })).toEqual([
-      "powerPrice.p2",
+      "powerPrice.p2.amount",
     ]);
   });
 });

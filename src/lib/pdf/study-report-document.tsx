@@ -4,6 +4,7 @@ import { Document, Font, Image, Page, renderToBuffer, StyleSheet, Text, View } f
 
 import type { StudyReport } from "@/engine/report";
 import type { BreakdownLine } from "@/engine/types";
+import { fill } from "@/lib/fill";
 import { formatCents } from "@/lib/format";
 
 // Sin esto, la librería parte las palabras con un guion al final de línea, y en español las parte mal.
@@ -62,13 +63,23 @@ function Figure({ label, value, detail, color }: { label: string; value: string;
   );
 }
 
+/** La operación de una línea y, debajo, su aclaración si la tiene: por ejemplo, que se aplica un mínimo legal. */
+function Operation({ line }: { line?: BreakdownLine }) {
+  return (
+    <View style={styles.operation}>
+      <Text>{line?.operation ?? ""}</Text>
+      {line?.note && <Text>{line.note}</Text>}
+    </View>
+  );
+}
+
 function BreakdownRow({ line, other }: { line: BreakdownLine; other?: BreakdownLine }) {
   return (
     <View style={styles.row} wrap={false}>
       <Text style={styles.concept}>{line.label}</Text>
-      <Text style={styles.operation}>{line.operation}</Text>
+      <Operation line={line} />
       <Text style={styles.amount}>{formatCents(line.cents)}</Text>
-      <Text style={styles.operation}>{other?.operation ?? ""}</Text>
+      <Operation line={other} />
       <Text style={styles.amount}>{other ? formatCents(other.cents) : ""}</Text>
     </View>
   );
@@ -82,7 +93,7 @@ function StudyReportDocument({ report }: { report: StudyReport }) {
   const { brand, texts } = report;
   const onBrand = textColorOn(brand.color);
   const proposedById = new Map(report.proposed.lines.map((line) => [line.id, line]));
-  const period = `en una factura de ${report.periodDays} días`;
+  const period = fill(texts.periodDetail, { dias: report.periodDays });
   const contact = [brand.phone, brand.email, brand.website].filter(Boolean).join("  ·  ");
 
   return (
@@ -117,14 +128,14 @@ function StudyReportDocument({ report }: { report: StudyReport }) {
               color={brand.color}
             />
           </View>
-          <Text style={styles.proposal}>Tarifa propuesta: {report.offerLabel}</Text>
+          <Text style={styles.proposal}>{fill(texts.proposedOffer, { oferta: report.offerLabel })}</Text>
 
           <Text style={styles.sectionTitle}>{texts.breakdownTitle}</Text>
           <View style={styles.headRow}>
             <Text style={[styles.concept, styles.bold]}>Concepto</Text>
             <Text style={[styles.operation, styles.bold, { color: INK, fontSize: 9 }]}>Hoy</Text>
             <Text style={[styles.amount, styles.bold]}>Importe</Text>
-            <Text style={[styles.operation, styles.bold, { color: INK, fontSize: 9 }]}>Con la tarifa propuesta</Text>
+            <Text style={[styles.operation, styles.bold, { color: INK, fontSize: 9 }]}>{texts.proposedColumn}</Text>
             <Text style={[styles.amount, styles.bold]}>Importe</Text>
           </View>
           {report.current.lines.map((line) => (

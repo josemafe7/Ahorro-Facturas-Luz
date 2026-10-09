@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { appConfig } from "@/config/app";
 import { getStudy } from "@/data/studies";
+import { parseId } from "@/lib/ids";
 import { requireUser } from "@/lib/session";
 
 import { saveStudyDocumentAction } from "../actions";
@@ -16,10 +17,10 @@ export const metadata: Metadata = { title: appConfig.sector.texts.study.title };
 
 export default async function StudyPage({ params }: PageProps<"/estudios/[id]">) {
   const user = await requireUser();
-  const { id } = await params;
+  const id = parseId((await params).id);
 
   // Si no existe o es de otro asesor, la misma pantalla de «no encontrado».
-  const study = await getStudy(user.id, id);
+  const study = id ? await getStudy(user.id, id) : null;
   if (!study) notFound();
 
   return (

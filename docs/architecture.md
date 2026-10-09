@@ -25,13 +25,13 @@ sector.
 | Pieza | Qué hace | Con qué está hecha |
 |---|---|---|
 | Pantallas (`src/app/`) | Lo que ve el asesor: entrar, estudios, catálogo y ajustes. Tienen poca lógica | Next.js, React, Tailwind CSS y shadcn/ui |
-| Marca y textos (`src/config/app.ts`) | El nombre, el logo, los colores y cómo se llaman las cosas del sector | Un archivo de configuración |
+| Marca y textos (`src/config/app.ts`) | El nombre, el logo, los colores y todas las frases que nombran el documento, el proveedor, la oferta y el estudio | Un archivo de configuración |
 | Motor (`src/engine/`) | Comparar un documento con un catálogo, proyectar el ahorro, leer con IA y montar el estudio | TypeScript, AI SDK y Zod |
 | Sector de la luz (`src/sectors/electricity/`) | La fórmula 2.0TD, las comprobaciones, lo que se le pide a la IA y sus campos de formulario | TypeScript y Zod |
 | Acceso a datos (`src/data/`) | El único sitio que lee y escribe en la base de datos. Cada función recibe el usuario y filtra por él | Prisma |
 | Base de datos (`data/`) | Usuarios, estudios, catálogo, ajustes, marca y archivos. Lo propio del sector va como JSON | SQLite |
 | Carpeta privada (`storage/`) | Las facturas y los logos subidos, con nombre aleatorio | El disco del servidor |
-| Inicio de sesión (`src/lib/auth.ts`) | Entrar con correo y contraseña, sesiones y límite de intentos | Better Auth |
+| Inicio de sesión (`src/lib/auth.ts`) | Entrar y salir con correo y contraseña, sesiones y límite de intentos. El resto de rutas de cuentas de la librería está cerrado | Better Auth |
 | Lectura con IA (`src/lib/ai.ts`) | Pide al modelo que lea un documento y devuelva datos con un formato fijo | AI SDK con OpenRouter y Claude Haiku 5.5 |
 | PDF (`src/lib/pdf/`) | Pinta el estudio para el cliente | @react-pdf/renderer |
 | Aritmética del dinero (`src/lib/decimal.ts`) | Cuentas exactas en céntimos, redondeando solo donde dice la especificación | TypeScript, sin librerías |

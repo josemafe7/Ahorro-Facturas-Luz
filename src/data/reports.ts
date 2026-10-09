@@ -8,6 +8,7 @@ import { getBrand } from "./brand";
 import { getFile } from "./files";
 import { getStudy } from "./studies";
 
+const { texts } = appConfig.sector;
 const LOGO_FORMATS: Record<string, "png" | "jpg"> = { "image/png": "png", "image/jpeg": "jpg" };
 
 async function reportBrand(userId: string): Promise<ReportBrand> {
@@ -33,6 +34,6 @@ export async function getStudyReport(userId: string, studyId: string): Promise<S
     selectedOfferId: study.selectedOfferId,
     customer: sector.documentSummary(document.data),
     brand: await reportBrand(userId),
-    texts: appConfig.sector.texts.pdf,
+    texts: { ...texts.pdf, periodDetail: texts.document.periodDetail },
   });
 }

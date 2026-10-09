@@ -12,6 +12,7 @@ import { UploadZone } from "@/components/upload-zone";
 import { aiConfig } from "@/config/ai";
 import { appConfig } from "@/config/app";
 import type { ImportedOffer, OffersImport, OffersImportStatus } from "@/data/offer-import";
+import { fill } from "@/lib/fill";
 import { routes } from "@/lib/routes";
 import { OfferFields } from "@/sectors/ui";
 
@@ -21,10 +22,10 @@ const { offer: texts } = appConfig.sector.texts;
 
 /** Qué ha pasado cuando la lectura no trae tarifas. */
 const EMPTY_MESSAGES: Record<Exclude<OffersImportStatus, "read">, string> = {
-  empty: "La IA no ha encontrado en ese documento ninguna tarifa que se pueda cargar.",
-  failed: "La IA no ha podido leer el documento. Vuelve a intentarlo o añade las tarifas a mano.",
-  limit: `Has llegado al límite de ${aiConfig.maxReadingsPerHour} lecturas con IA por hora. Inténtalo más tarde o añade las tarifas a mano.`,
-  "not-configured": "La lectura con IA no está configurada: falta la clave de OpenRouter en el servidor. Añade las tarifas a mano.",
+  empty: texts.importEmpty,
+  failed: texts.importFailed,
+  limit: fill(texts.importLimit, { limite: aiConfig.maxReadingsPerHour }),
+  "not-configured": texts.importNotConfigured,
 };
 
 type Decision = "pending" | "saved" | "discarded";
@@ -32,7 +33,7 @@ type Decision = "pending" | "saved" | "discarded";
 /** Una tarifa propuesta: el asesor la revisa, la corrige y decide si la guarda o la descarta. */
 function ProposalCard({ proposal, index, total }: { proposal: ImportedOffer; index: number; total: number }) {
   const [decision, setDecision] = useState<Decision>("pending");
-  const title = [proposal.draft.provider, proposal.draft.name].filter(Boolean).join(" · ") || `Tarifa ${index + 1}`;
+  const title = [proposal.draft.provider, proposal.draft.name].filter(Boolean).join(" · ") || fill(texts.proposalTitle, { numero: index + 1 });
   const doubtCount = Object.keys(proposal.doubts).length;
 
   if (decision !== "pending") {
@@ -56,7 +57,7 @@ function ProposalCard({ proposal, index, total }: { proposal: ImportedOffer; ind
       title={title}
       description={
         doubtCount === 0
-          ? `Propuesta ${index + 1} de ${total}. Compárala con el tarifario antes de guardarla.`
+          ? fill(texts.proposalHint, { numero: index + 1, total })
           : `Propuesta ${index + 1} de ${total}. Tiene ${doubtCount === 1 ? "1 dato" : `${doubtCount} datos`} que conviene revisar, en ámbar.`
       }
     >
@@ -65,13 +66,13 @@ function ProposalCard({ proposal, index, total }: { proposal: ImportedOffer; ind
         submitLabel={texts.save}
         scope={`propuesta-${index}`}
         doubts={proposal.doubts}
-        successMessage="Tarifa guardada."
+        successMessage={texts.saved}
         onSuccess={() => setDecision("saved")}
       >
         {(form) => <OfferFields value={proposal.draft} form={form} />}
       </FormShell>
       <Button type="button" variant="ghost" className="mt-2 text-muted-foreground" onClick={() => setDecision("discarded")}>
-        Descartar esta tarifa
+        {texts.discard}
       </Button>
     </FormSection>
   );
@@ -84,7 +85,10 @@ export function OffersImporter({ accept, typesLabel, maxMb }: { accept: string; 
   if (result?.status === "read") {
     return (
       <div className="flex flex-col gap-6">
-        <Notice tone="info" title={result.proposals.length === 1 ? "La IA ha encontrado 1 tarifa" : `La IA ha encontrado ${result.proposals.length} tarifas`}>
+        <Notice
+          tone="info"
+          title={result.proposals.length === 1 ? texts.importFoundOne : fill(texts.importFoundMany, { total: result.proposals.length })}
+        >
           Ninguna está guardada todavía. Revisa cada una, corrige lo que haga falta y guarda las que quieras.
         </Notice>
         {result.proposals.map((proposal, index) => (
@@ -95,7 +99,7 @@ export function OffersImporter({ accept, typesLabel, maxMb }: { accept: string; 
             Volver al catálogo
           </Link>
           <Button type="button" variant="ghost" onClick={() => setResult(null)}>
-            Subir otro tarifario
+            {texts.importAnother}
           </Button>
         </div>
       </div>
@@ -110,7 +114,7 @@ export function OffersImporter({ accept, typesLabel, maxMb }: { accept: string; 
         onSuccess={setResult}
         title={texts.importTitle}
         hint={texts.importHint}
-        busyLabel="Leyendo el tarifario…"
+        busyLabel={texts.importReading}
         accept={accept}
         typesLabel={typesLabel}
         maxMb={maxMb}
