@@ -4,10 +4,12 @@
  */
 import { db } from "@/lib/db";
 
+import { seedOffers } from "./seed/offers";
 import { createUser, DEMO_ADVISOR } from "./seed/users";
 
 async function main() {
-  await createUser(DEMO_ADVISOR);
+  const advisor = await createUser(DEMO_ADVISOR);
+  await seedOffers(advisor.id);
   console.log(`Datos de ejemplo cargados. Entra con ${DEMO_ADVISOR.email} y la contraseña ${DEMO_ADVISOR.password}`);
 }
 
