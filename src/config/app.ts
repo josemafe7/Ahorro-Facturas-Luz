@@ -53,6 +53,7 @@ export const appConfig = {
         name: "tarifa",
         plural: "tarifas",
         catalogTitle: "Catálogo de tarifas",
+        compared: "Tarifas comparadas",
         add: "Añadir tarifa",
         edit: "Cambiar tarifa",
         save: "Guardar tarifa",

@@ -9,11 +9,14 @@ import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { appConfig } from "@/config/app";
 import { listStudies } from "@/data/studies";
-import { formatDate } from "@/lib/format";
+import { formatCents, formatDate } from "@/lib/format";
 import { routes } from "@/lib/routes";
 import { requireUser } from "@/lib/session";
 
-const { study: texts } = appConfig.sector.texts;
+import { DeleteStudyButton } from "./_components/delete-study-button";
+import { StudyStatusSelect } from "./_components/study-status-select";
+
+const { study: texts, offer: offerTexts } = appConfig.sector.texts;
 
 export const metadata: Metadata = { title: texts.plural };
 
@@ -48,20 +51,35 @@ export default async function StudiesPage() {
             <TableRow className="hover:bg-transparent">
               <TableHead className="px-4 text-muted-foreground">{texts.customer}</TableHead>
               <TableHead className="px-4 text-muted-foreground">Fecha</TableHead>
+              <TableHead className="px-4 text-muted-foreground">{offerTexts.proposed}</TableHead>
+              <TableHead className="px-4 text-right text-muted-foreground">Ahorro al año</TableHead>
               <TableHead className="px-4 text-muted-foreground">Estado</TableHead>
+              <TableHead className="px-4">
+                <span className="sr-only">Acciones</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {studies.map((study) => (
               <TableRow key={study.id} className="h-12">
                 <TableCell className="px-4 font-medium">
-                  <Link href={routes.study(study.id)} className="hover:text-primary hover:underline">
+                  <Link
+                    href={study.proposedOffer ? routes.studyComparison(study.id) : routes.study(study.id)}
+                    className="hover:text-primary hover:underline"
+                  >
                     {study.customerName ?? "Sin revisar"}
                   </Link>
                 </TableCell>
                 <TableCell className="px-4 text-muted-foreground">{formatDate(study.createdAt)}</TableCell>
+                <TableCell className="px-4">{study.proposedOffer ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell className="tabular px-4 text-right font-semibold text-primary">
+                  {study.yearSavingsCents === null ? <span className="font-normal text-muted-foreground">—</span> : formatCents(study.yearSavingsCents)}
+                </TableCell>
                 <TableCell className="px-4">
-                  <StatusBadge status={study.status} />
+                  {study.proposedOffer ? <StudyStatusSelect studyId={study.id} status={study.status} /> : <StatusBadge status={study.status} />}
+                </TableCell>
+                <TableCell className="px-4 text-right">
+                  <DeleteStudyButton id={study.id} customerName={study.customerName} />
                 </TableCell>
               </TableRow>
             ))}

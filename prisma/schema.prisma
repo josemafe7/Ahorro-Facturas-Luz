@@ -14,13 +14,13 @@ datasource db {
 // ---------------------------------------------------------------------------------------------------------
 
 model User {
-  id            String    @id
+  id            String           @id
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String           @unique
+  emailVerified Boolean          @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
   sessions      Session[]
   accounts      Account[]
   settings      SectorSettings[]
@@ -28,6 +28,7 @@ model User {
   files         StoredFile[]
   studies       Study[]
   aiReadings    AiReading[]
+  brand         AdvisorBrand?
 
   @@map("user")
 }
@@ -115,15 +116,16 @@ model Offer {
 
 /// Un archivo subido por un asesor: una factura, un tarifario o su logo. Vive en la carpeta privada.
 model StoredFile {
-  id         String   @id @default(cuid())
+  id         String         @id @default(cuid())
   userId     String
   /// El nombre con el que está guardado: aleatorio, nunca el original.
-  storageKey String   @unique
+  storageKey String         @unique
   mimeType   String
   size       Int
-  createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   studies    Study[]
+  brands     AdvisorBrand[]
 
   @@index([userId])
   @@map("stored_file")
@@ -131,26 +133,34 @@ model StoredFile {
 
 /// Un estudio: de la factura del cliente a la propuesta.
 model Study {
-  id            String      @id @default(cuid())
-  userId        String
-  sector        String
+  id               String      @id @default(cuid())
+  userId           String
+  sector           String
   /// draft, sent, accepted o contracted
-  status        String      @default("draft")
+  status           String      @default("draft")
   /// El titular, para la lista.
-  customerName  String?
-  fileId        String?
+  customerName     String?
+  fileId           String?
   /// Cómo fue la lectura con IA: read, not-recognized, failed, limit o not-configured.
-  readingStatus String?
+  readingStatus    String?
   /// Los datos del documento tal como están ahora, revisados o no.
-  draft         String      @default("{}")
+  draft            String      @default("{}")
   /// Los datos que conviene revisar y por qué.
-  doubts        String      @default("{}")
+  doubts           String      @default("{}")
   /// Cuándo dio el asesor los datos por buenos. Sin esto no hay cálculo.
-  reviewedAt    DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  file          StoredFile? @relation(fields: [fileId], references: [id])
+  reviewedAt       DateTime?
+  /// El cálculo guardado: lo que paga hoy y lo que pagaría con cada oferta, con sus precios e impuestos de
+  /// ese momento. No cambia aunque después cambien el catálogo o los ajustes.
+  calculation      String?
+  /// La oferta elegida para el estudio, dentro del cálculo guardado.
+  selectedOfferId  String?
+  /// Para la lista: el nombre de la oferta elegida y su ahorro anual, en céntimos.
+  proposedOffer    String?
+  yearSavingsCents Int?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file             StoredFile? @relation(fields: [fileId], references: [id])
 
   @@index([userId, sector, createdAt])
   @@map("study")
@@ -165,4 +175,21 @@ model AiReading {
 
   @@index([userId, createdAt])
   @@map("ai_reading")
+}
+
+/// La marca del asesor, que es la que sale en el PDF del estudio.
+model AdvisorBrand {
+  userId       String      @id
+  businessName String
+  /// El color principal, como #RRGGBB.
+  color        String
+  phone        String?
+  email        String?
+  website      String?
+  logoFileId   String?
+  updatedAt    DateTime    @updatedAt
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logo         StoredFile? @relation(fields: [logoFileId], references: [id])
+
+  @@map("advisor_brand")
 }

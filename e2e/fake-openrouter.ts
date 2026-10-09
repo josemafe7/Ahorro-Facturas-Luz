@@ -47,13 +47,13 @@ function attachedFiles(value: unknown, found: Uint8Array[] = []): Uint8Array[] {
 }
 
 export function startFakeOpenRouter(port = FAKE_OPENROUTER_PORT): Promise<Server> {
-  const readings = readingsByFile();
-
   const server = createServer((request, response) => {
     const chunks: Buffer[] = [];
     request.on("data", (chunk: Buffer) => chunks.push(chunk));
     request.on("end", () => {
       const body: unknown = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+      // Se miran los archivos de ejemplo en cada petición: así valen aunque se hayan vuelto a generar.
+      const readings = readingsByFile();
       const reading = attachedFiles(body)
         .map((file) => readings.get(sha256(file)))
         .find((match) => match !== undefined);

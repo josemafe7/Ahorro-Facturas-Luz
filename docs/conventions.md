@@ -57,6 +57,8 @@ Context7:
   pantallas usan el sector activo a través de `src/sectors/index.ts`, `forms.ts` y `ui.ts`, sin nombrarlo.
 - `src/components/form/`: los campos de formulario compartidos. Un formulario conserva lo que la persona
   escribió si el envío falla (`src/lib/form-state.ts`).
+- El estudio en PDF se monta en dos pasos: `src/engine/report.ts` reúne lo que lleva, con los importes del
+  cálculo guardado, y `src/lib/pdf/` solo lo pinta. Así lo que se prueba es el contenido, sin leer el PDF.
 - El dinero se calcula en céntimos enteros y con decimales exactos (`src/lib/decimal.ts`), nunca con los
   números con decimales de JavaScript.
 - `src/data/`: el acceso a datos, con `import 'server-only'`.

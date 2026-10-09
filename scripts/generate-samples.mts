@@ -13,17 +13,23 @@ import { mkdirSync, mkdtempSync, renameSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { Document, Page, renderToFile, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Font, Page, renderToFile, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { createElement as h, type ReactNode } from "react";
 
 import { formatCents, formatDate, formatNumber } from "@/lib/format";
 import { DEFAULT_ELECTRICITY_SETTINGS } from "@/sectors/electricity/settings";
 import { ENERGY_PERIODS, POWER_PERIODS, POWER_PRICE_UNIT_LABELS } from "@/sectors/electricity/texts";
 
-import { SAMPLE_INVOICES, type SampleInvoice } from "./sample-invoices";
+import { SAMPLE_INVOICES, SEED_INVOICES, type SampleInvoice } from "./sample-invoices";
 import { invoiceLines } from "./sample-readings";
 
-const OUTPUT_DIR = path.resolve("ejemplos");
+// Sin esto, la librería parte las palabras con un guion al final de línea.
+Font.registerHyphenationCallback((word) => [word]);
+
+/** Las facturas para subir en la demo. */
+const DEMO_DIR = path.resolve("ejemplos");
+/** Las facturas de los estudios que carga `pnpm seed`. */
+const SEED_DIR = path.resolve("prisma/seed/facturas");
 const POWER_KEYS = ["p1", "p2"] as const;
 const ENERGY_KEYS = ["p1", "p2", "p3"] as const;
 const settings = DEFAULT_ELECTRICITY_SETTINGS;
@@ -70,7 +76,8 @@ function invoiceDocument(sample: SampleInvoice) {
 
   return h(
     Document,
-    { title: `Factura ${sample.invoiceNumber}`, author: provider.name },
+    // Con la fecha fija, generar dos veces la misma factura da el mismo archivo.
+    { title: `Factura ${sample.invoiceNumber}`, author: provider.name, creationDate: new Date(sample.issuedOn), modificationDate: new Date(sample.issuedOn) },
     h(
       Page,
       { size: "A4", style: styles.page },
@@ -188,29 +195,31 @@ function toPhoto(pdf: string, jpg: string): boolean {
   }
 }
 
-async function main() {
-  mkdirSync(OUTPUT_DIR, { recursive: true });
+async function generate(sample: SampleInvoice, directory: string) {
+  mkdirSync(directory, { recursive: true });
+  const pdf = path.join(directory, `${sample.file}.pdf`);
+  await renderToFile(invoiceDocument(sample), pdf);
+  const total = formatCents(invoiceLines(sample).totalCents);
 
-  for (const sample of SAMPLE_INVOICES) {
-    const pdf = path.join(OUTPUT_DIR, `${sample.file}.pdf`);
-    await renderToFile(invoiceDocument(sample), pdf);
-    const total = formatCents(invoiceLines(sample).totalCents);
-
-    if (!sample.asPhoto) {
-      console.log(`${sample.file}.pdf · ${sample.data.holder} · total ${total}`);
-      continue;
-    }
-    const temporary = path.join(OUTPUT_DIR, `.${sample.file}.pdf`);
-    renameSync(pdf, temporary);
-    const jpg = path.join(OUTPUT_DIR, `${sample.file}.jpg`);
-    if (toPhoto(temporary, jpg)) {
-      rmSync(temporary);
-      console.log(`${sample.file}.jpg · ${sample.data.holder} · total ${total}`);
-    } else {
-      renameSync(temporary, pdf);
-      console.log(`${sample.file}.pdf · no se ha podido convertir en foto (hace falta macOS): se queda en PDF`);
-    }
+  if (!sample.asPhoto) {
+    console.log(`${sample.file}.pdf · ${sample.data.holder} · total ${total}`);
+    return;
   }
+  const temporary = path.join(directory, `.${sample.file}.pdf`);
+  renameSync(pdf, temporary);
+  const jpg = path.join(directory, `${sample.file}.jpg`);
+  if (toPhoto(temporary, jpg)) {
+    rmSync(temporary);
+    console.log(`${sample.file}.jpg · ${sample.data.holder} · total ${total}`);
+  } else {
+    renameSync(temporary, pdf);
+    console.log(`${sample.file}.pdf · no se ha podido convertir en foto (hace falta macOS): se queda en PDF`);
+  }
+}
+
+async function main() {
+  for (const sample of SAMPLE_INVOICES) await generate(sample, DEMO_DIR);
+  for (const sample of SEED_INVOICES) await generate(sample, SEED_DIR);
 }
 
 main().catch((error: unknown) => {

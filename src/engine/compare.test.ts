@@ -35,6 +35,8 @@ const phoneSector: Sector<PhoneBill, PhonePlan, Record<string, never>> = {
   currentCost: (bill) => fee(bill.monthlyFeeCents),
   offerCost: (_bill, plan) => fee(plan.monthlyFeeCents),
   findDoubts: () => [],
+  printedTotalCents: () => undefined,
+  documentSummary: () => [],
   customerName: () => undefined,
   offerLabel: (plan) => plan.operator,
 };

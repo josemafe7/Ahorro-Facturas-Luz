@@ -1,4 +1,4 @@
-import type { StudyStatus } from "@/data/studies";
+import type { StudyStatus } from "@/data/study-status";
 import { cn } from "@/lib/utils";
 
 /** Los cuatro estados de un estudio, con su nombre y su color (DESIGN.md). */

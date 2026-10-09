@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { DOCUMENT_UPLOAD } from "@/data/files";
-import { createStudy, readStudy, saveStudyDocument } from "@/data/studies";
+import { calculateStudy, createStudy, deleteStudy, readStudy, saveStudyDocument, selectStudyOffer, setStudyStatus } from "@/data/studies";
 import { getReadingModel } from "@/lib/ai";
-import { failed, succeeded, type FormState } from "@/lib/form-state";
+import { failed, type FormState } from "@/lib/form-state";
 import type { Result } from "@/lib/result";
 import { routes } from "@/lib/routes";
 import { requireUser } from "@/lib/session";
@@ -50,16 +50,67 @@ export async function rereadStudyAction(id: string): Promise<Result<unknown>> {
   return result;
 }
 
-/** Guarda los datos que el asesor da por buenos. */
+/** Guarda los datos que el asesor da por buenos, calcula el estudio y enseña la comparativa. */
 export async function saveStudyDocumentAction(id: string, _previous: FormState, form: FormData): Promise<FormState> {
   const user = await requireUser();
   const parsedId = idSchema.safeParse(id);
   if (!parsedId.success) return failed(INVALID_REQUEST.message, form);
 
-  const result = await saveStudyDocument(user.id, parsedId.data, sectorForms.document(form));
-  if (!result.ok) return failed(result.message, form, result.fieldErrors);
+  const saved = await saveStudyDocument(user.id, parsedId.data, sectorForms.document(form));
+  if (!saved.ok) return failed(saved.message, form, saved.fieldErrors);
+
+  const calculated = await calculateStudy(user.id, parsedId.data);
+  if (!calculated.ok) return failed(calculated.message, form);
 
   revalidatePath(routes.studies);
-  revalidatePath(routes.study(parsedId.data));
-  return succeeded("Datos guardados.");
+  redirect(routes.studyComparison(parsedId.data));
+}
+
+/** Vuelve a calcular un estudio con el catálogo y los impuestos de ahora. */
+export async function recalculateStudyAction(id: string): Promise<Result<unknown>> {
+  const user = await requireUser();
+  const parsedId = idSchema.safeParse(id);
+  if (!parsedId.success) return INVALID_REQUEST;
+
+  const result = await calculateStudy(user.id, parsedId.data);
+  revalidatePath(routes.studies);
+  revalidatePath(routes.studyComparison(parsedId.data));
+  return result;
+}
+
+const selectOfferSchema = z.object({ studyId: idSchema, offerId: idSchema });
+
+export async function selectStudyOfferAction(input: { studyId: string; offerId: string }): Promise<Result<unknown>> {
+  const user = await requireUser();
+  const parsed = selectOfferSchema.safeParse(input);
+  if (!parsed.success) return INVALID_REQUEST;
+
+  const result = await selectStudyOffer(user.id, parsed.data.studyId, parsed.data.offerId);
+  revalidatePath(routes.studies);
+  revalidatePath(routes.studyComparison(parsed.data.studyId));
+  return result;
+}
+
+const setStatusSchema = z.object({ studyId: idSchema, status: z.string().max(20) });
+
+export async function setStudyStatusAction(input: { studyId: string; status: string }): Promise<Result<unknown>> {
+  const user = await requireUser();
+  const parsed = setStatusSchema.safeParse(input);
+  if (!parsed.success) return INVALID_REQUEST;
+
+  const result = await setStudyStatus(user.id, parsed.data.studyId, parsed.data.status);
+  revalidatePath(routes.studies);
+  revalidatePath(routes.study(parsed.data.studyId));
+  return result;
+}
+
+/** Borra un estudio con su factura. Lo confirma antes la persona en un diálogo. */
+export async function deleteStudyAction(id: string): Promise<Result<unknown>> {
+  const user = await requireUser();
+  const parsedId = idSchema.safeParse(id);
+  if (!parsedId.success) return INVALID_REQUEST;
+
+  const result = await deleteStudy(user.id, parsedId.data);
+  revalidatePath(routes.studies);
+  return result;
 }

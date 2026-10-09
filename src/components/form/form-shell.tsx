@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useEffect, type ReactNode } from "react";
+import { toast } from "sonner";
 
 import { Notice } from "@/components/notice";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -17,18 +18,25 @@ export function FormShell({
   pendingLabel = "Guardando…",
   cancelHref,
   doubts,
+  successMessage,
   children,
 }: {
   action: (state: FormState, form: FormData) => Promise<FormState>;
   submitLabel: string;
   pendingLabel?: string;
   cancelHref?: string;
+  /** Si el formulario se queda en la misma pantalla al guardar, el aviso breve que lo confirma. */
+  successMessage?: string;
   /** Los campos que conviene revisar y por qué (regla R1). */
   doubts?: Record<string, string>;
   children: (feedback: FormFeedback) => ReactNode;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, null);
   const feedback = { ...(state?.feedback ?? NO_FEEDBACK), doubts };
+
+  useEffect(() => {
+    if (state?.ok && successMessage) toast.success(successMessage);
+  }, [state, successMessage]);
 
   return (
     <form action={formAction} className="flex flex-col gap-6" noValidate>

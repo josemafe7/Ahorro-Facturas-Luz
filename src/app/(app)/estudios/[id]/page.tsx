@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { StatusBadge } from "@/components/status-badge";
 import { appConfig } from "@/config/app";
 import { getStudy } from "@/data/studies";
 import { requireUser } from "@/lib/session";
@@ -11,6 +10,7 @@ import { DocumentForm } from "./_components/document-form";
 import { DocumentViewer } from "./_components/document-viewer";
 import { ReadingNotice } from "./_components/reading-notice";
 import { StudyHeader } from "./_components/study-header";
+import { StudyStatusSelect } from "../_components/study-status-select";
 
 export const metadata: Metadata = { title: appConfig.sector.texts.study.title };
 
@@ -24,7 +24,12 @@ export default async function StudyPage({ params }: PageProps<"/estudios/[id]">)
 
   return (
     <>
-      <StudyHeader studyId={study.id} customerName={study.customerName} active="data" action={<StatusBadge status={study.status} />} />
+      <StudyHeader
+        studyId={study.id}
+        customerName={study.customerName}
+        active="data"
+        action={<StudyStatusSelect studyId={study.id} status={study.status} />}
+      />
       <div className="grid gap-6 lg:grid-cols-2">
         {study.file && (
           <div className="lg:sticky lg:top-8 lg:self-start">
@@ -42,8 +47,8 @@ export default async function StudyPage({ params }: PageProps<"/estudios/[id]">)
             action={saveStudyDocumentAction.bind(null, study.id)}
             value={study.draft}
             doubts={study.doubts}
-            submitLabel="Guardar datos"
-            pendingLabel="Guardando…"
+            submitLabel={study.calculation ? "Guardar y recalcular" : "Calcular"}
+            pendingLabel="Calculando…"
           />
         </div>
       </div>

@@ -4,17 +4,20 @@ import type { LanguageModel } from "ai";
 import { z } from "zod";
 
 import { aiConfig } from "@/config/ai";
-import { readWithAi } from "@/engine/reading";
+import { buildCalculation, calculationSchema, savingOffers, type CalculatedOffer, type Calculation } from "@/engine/calculation";
+import { readWithAi, type DocumentReading } from "@/engine/reading";
 import type { Doubt, Draft } from "@/engine/types";
 import { db } from "@/lib/db";
 import { invalid, parseJson, type Result } from "@/lib/result";
 import { sector, type SectorDocument } from "@/sectors";
 
 import { startAiReading } from "./ai-readings";
-import { DOCUMENT_UPLOAD, getFile, saveUpload, type StoredFileRef } from "./files";
+import { deleteFile, DOCUMENT_UPLOAD, getFile, saveUpload, type StoredFileRef } from "./files";
+import { listActiveOffers } from "./offers";
+import { getSettings } from "./settings";
+import { STUDY_STATUSES, type StudyStatus } from "./study-status";
 
-export const STUDY_STATUSES = ["draft", "sent", "accepted", "contracted"] as const;
-export type StudyStatus = (typeof STUDY_STATUSES)[number];
+export { STUDY_STATUSES, type StudyStatus } from "./study-status";
 
 /** Cómo fue la última lectura con IA de un estudio. */
 export const READING_STATUSES = ["read", "not-recognized", "failed", "limit", "not-configured"] as const;
@@ -36,15 +39,20 @@ export type StudyDetail = {
   doubts: Doubts;
   /** Si el asesor ya ha dado los datos por buenos. Sin eso no hay cálculo. */
   reviewed: boolean;
+  /** El cálculo guardado, si ya se ha calculado. */
+  calculation: Calculation | null;
+  /** La oferta elegida para el estudio. `null` si no hay cálculo o ninguna oferta ahorra. */
+  selectedOfferId: string | null;
 };
 
-/** Un estudio en la lista. */
+/** Un estudio en la lista (regla L1). */
 export type StudyRow = {
   id: string;
   status: StudyStatus;
   customerName: string | null;
   createdAt: Date;
-  reviewed: boolean;
+  proposedOffer: string | null;
+  yearSavingsCents: number | null;
 };
 
 /** El mismo mensaje si no existe y si es de otro asesor: no se revela cuál de las dos. */
@@ -108,11 +116,25 @@ export async function readStudy(
   if (!outcome.ok) return finish("failed");
   if (!outcome.value.recognized) return finish("not-recognized", { draft: "{}", doubts: "{}" });
 
-  return finish("read", {
-    draft: JSON.stringify(outcome.value.draft),
-    doubts: JSON.stringify(toDoubts(outcome.value.doubts)),
-    customerName: sector.customerName(outcome.value.draft),
-  });
+  return finish("read", readingData(outcome.value));
+}
+
+/** Lo que se guarda de un documento leído: sus datos, sus dudas y a nombre de quién está. */
+function readingData(reading: DocumentReading<SectorDocument>) {
+  return {
+    draft: JSON.stringify(reading.draft),
+    doubts: JSON.stringify(toDoubts(reading.doubts)),
+    customerName: sector.customerName(reading.draft),
+  };
+}
+
+/**
+ * Deja en un estudio una lectura ya hecha, como si la acabara de proponer la IA. Lo usan los datos de
+ * ejemplo, que no llaman a la IA.
+ */
+export async function saveStudyReading(userId: string, id: string, reading: DocumentReading<SectorDocument>): Promise<Result<{ id: string }>> {
+  const { count } = await db.study.updateMany({ where: ownStudy(userId, id), data: { readingStatus: "read", ...readingData(reading) } });
+  return count === 0 ? NOT_FOUND : { ok: true, value: { id } };
 }
 
 /** Regla R1: un estudio con todos sus datos y sus dudas. `null` si no existe o es de otro asesor. */
@@ -128,6 +150,8 @@ export async function getStudy(userId: string, id: string): Promise<StudyDetail 
       draft: true,
       doubts: true,
       reviewedAt: true,
+      calculation: true,
+      selectedOfferId: true,
       file: { select: { id: true, mimeType: true } },
     },
   });
@@ -135,6 +159,7 @@ export async function getStudy(userId: string, id: string): Promise<StudyDetail 
 
   const draft = sector.draftSchema.safeParse(parseJson(study.draft));
   const doubts = doubtsSchema.safeParse(parseJson(study.doubts));
+  const calculation = study.calculation === null ? null : calculationSchema.safeParse(parseJson(study.calculation));
   return {
     id: study.id,
     status: oneOf(STUDY_STATUSES, study.status) ?? "draft",
@@ -145,6 +170,8 @@ export async function getStudy(userId: string, id: string): Promise<StudyDetail 
     draft: draft.success ? draft.data : {},
     doubts: doubts.success ? doubts.data : {},
     reviewed: study.reviewedAt !== null,
+    calculation: calculation?.success ? calculation.data : null,
+    selectedOfferId: study.selectedOfferId,
   };
 }
 
@@ -178,11 +205,79 @@ export async function listStudies(userId: string): Promise<StudyRow[]> {
   const studies = await db.study.findMany({
     where: { userId, sector: sector.id },
     orderBy: { createdAt: "desc" },
-    select: { id: true, status: true, customerName: true, createdAt: true, reviewedAt: true },
+    select: { id: true, status: true, customerName: true, createdAt: true, proposedOffer: true, yearSavingsCents: true },
   });
-  return studies.map(({ reviewedAt, status, ...study }) => ({
-    ...study,
-    status: oneOf(STUDY_STATUSES, status) ?? "draft",
-    reviewed: reviewedAt !== null,
-  }));
+  return studies.map(({ status, ...study }) => ({ ...study, status: oneOf(STUDY_STATUSES, status) ?? "draft" }));
+}
+
+/** Lo que se guarda de la oferta elegida: cuál es y, para la lista, su nombre y su ahorro anual. */
+function selection(offer: CalculatedOffer | null) {
+  return {
+    selectedOfferId: offer?.id ?? null,
+    proposedOffer: offer?.label ?? null,
+    yearSavingsCents: offer?.savings.yearCents ?? null,
+  };
+}
+
+/**
+ * Calcula un estudio ya revisado contra las tarifas activas del asesor, con sus impuestos de ahora, y guarda
+ * el resultado (reglas C8 a C12). Propone la tarifa de mayor ahorro (regla P1); si ninguna ahorra, ninguna,
+ * y el estudio vuelve a borrador (regla L3).
+ */
+export async function calculateStudy(userId: string, id: string): Promise<Result<{ calculation: Calculation }>> {
+  const study = await db.study.findFirst({
+    where: ownStudy(userId, id),
+    select: { draft: true, reviewedAt: true, status: true },
+  });
+  if (!study) return NOT_FOUND;
+
+  const document = sector.documentSchema.safeParse(parseJson(study.draft));
+  if (!study.reviewedAt || !document.success) return { ok: false, message: "Revisa y guarda los datos antes de calcular." };
+
+  const [offers, settings] = await Promise.all([listActiveOffers(userId), getSettings(userId)]);
+  const calculation = buildCalculation(sector, document.data, offers, settings);
+  const best = savingOffers(calculation)[0] ?? null;
+
+  await db.study.update({
+    where: { id },
+    data: { calculation: JSON.stringify(calculation), ...selection(best), status: best ? study.status : "draft" },
+  });
+  return { ok: true, value: { calculation } };
+}
+
+/** Regla P1: el asesor elige para el estudio otra de las tarifas que ahorran. */
+export async function selectStudyOffer(userId: string, id: string, offerId: string): Promise<Result<{ id: string }>> {
+  const study = await getStudy(userId, id);
+  if (!study?.calculation) return NOT_FOUND;
+
+  const offer = savingOffers(study.calculation).find((candidate) => candidate.id === offerId);
+  if (!offer) return { ok: false, message: "Esa tarifa no está entre las que ahorran en este estudio." };
+
+  await db.study.update({ where: { id }, data: selection(offer) });
+  return { ok: true, value: { id } };
+}
+
+/** Reglas L2 y L3: el asesor cambia el estado a mano. Sin una tarifa propuesta, solo puede ser borrador. */
+export async function setStudyStatus(userId: string, id: string, status: string): Promise<Result<{ status: StudyStatus }>> {
+  const next = oneOf(STUDY_STATUSES, status);
+  if (!next) return { ok: false, message: "Ese estado no existe." };
+
+  const study = await db.study.findFirst({ where: ownStudy(userId, id), select: { selectedOfferId: true } });
+  if (!study) return NOT_FOUND;
+  if (next !== "draft" && !study.selectedOfferId) {
+    return { ok: false, message: "Calcula el estudio antes de cambiar su estado." };
+  }
+
+  await db.study.update({ where: { id }, data: { status: next } });
+  return { ok: true, value: { status: next } };
+}
+
+/** Regla L5: borra un estudio con todos sus datos y la factura guardada. */
+export async function deleteStudy(userId: string, id: string): Promise<Result<{ id: string }>> {
+  const study = await db.study.findFirst({ where: ownStudy(userId, id), select: { fileId: true } });
+  if (!study) return NOT_FOUND;
+
+  await db.study.delete({ where: { id } });
+  if (study.fileId) await deleteFile(userId, study.fileId);
+  return { ok: true, value: { id } };
 }

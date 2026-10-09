@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { detectFileType } from "@/lib/storage";
 import { isValidCups } from "@/sectors/electricity/cups";
 
-import { SAMPLE_INVOICES } from "./sample-invoices";
+import { SAMPLE_INVOICES, SEED_INVOICES } from "./sample-invoices";
 import { invoiceLines } from "./sample-readings";
 
 describe("Facturas de ejemplo", () => {
@@ -19,7 +19,7 @@ describe("Facturas de ejemplo", () => {
 
     expect(types).toEqual(["application/pdf", "application/pdf", "image/jpeg"]);
     // Inventadas, pero coherentes: CUPS con sus letras de control y, la primera, el ejemplo hecho a mano.
-    expect(SAMPLE_INVOICES.every(({ data }) => isValidCups(data.cups))).toBe(true);
+    expect([...SAMPLE_INVOICES, ...SEED_INVOICES].every(({ data }) => isValidCups(data.cups))).toBe(true);
     expect(invoiceLines(SAMPLE_INVOICES[0]).totalCents).toBe(9365);
   });
 });

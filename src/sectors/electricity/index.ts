@@ -5,6 +5,7 @@
  * través del contrato `Sector` de `src/engine/types.ts`.
  */
 import type { Sector } from "@/engine/types";
+import { formatDate } from "@/lib/format";
 
 import { findInvoiceDoubts } from "./checks";
 import { calculateBill, type BillInput } from "./formula";
@@ -62,6 +63,22 @@ export const electricitySector: Sector<Invoice, Tariff, ElectricitySettings> = {
     ),
 
   findDoubts: findInvoiceDoubts,
+
+  printedTotalCents: (invoice) => invoice.invoiceTotalCents,
+
+  documentSummary: (invoice) => [
+    { label: "Titular", value: invoice.holder },
+    ...(invoice.supplyAddress ? [{ label: "Dirección de suministro", value: invoice.supplyAddress }] : []),
+    ...(invoice.cups ? [{ label: "CUPS", value: invoice.cups }] : []),
+    ...(invoice.currentProvider ? [{ label: "Comercializadora actual", value: invoice.currentProvider }] : []),
+    {
+      label: "Periodo de la factura",
+      value:
+        invoice.periodStart && invoice.periodEnd
+          ? `Del ${formatDate(invoice.periodStart)} al ${formatDate(invoice.periodEnd)} (${invoice.days} días)`
+          : `${invoice.days} días`,
+    },
+  ],
 
   customerName: (draft) => draft.holder,
 

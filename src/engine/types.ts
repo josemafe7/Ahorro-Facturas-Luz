@@ -71,6 +71,10 @@ export type Sector<TDocument, TOffer, TSettings> = {
   documentReader: Reader<any, DocumentReading<TDocument>>;
   /** Las comprobaciones que no necesitan IA: datos que no cuadran o que no son razonables. */
   findDoubts(draft: Draft<TDocument>): Doubt[];
+  /** El total impreso en el documento, si lo trae: sirve para avisar de que el cálculo no cuadra. */
+  printedTotalCents(document: TDocument): number | undefined;
+  /** Los datos del cliente que identifican el estudio en el PDF: titular, dirección… */
+  documentSummary(document: TDocument): Array<{ label: string; value: string }>;
   /** A nombre de quién está el documento, si ya se sabe, para reconocer el estudio en la lista. */
   customerName(draft: Draft<TDocument>): string | undefined;
   /** Cómo se llama una oferta en una lista: «Comercializadora · Tarifa». */
