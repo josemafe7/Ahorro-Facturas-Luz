@@ -1,5 +1,8 @@
 import { parseNumber } from "@/lib/format";
 
+import { normalizeCups } from "./cups";
+import { normalizeAccessTariff } from "./schema";
+
 /**
  * Convierte lo que llega de un formulario en datos para validar con el esquema del sector. Un número que no
  * se entiende llega como `null`, y el esquema lo rechaza con su mensaje.
@@ -16,6 +19,19 @@ function optionalText(form: FormData, name: string): string | undefined {
 
 function number(form: FormData, name: string): number | null {
   return parseNumber(text(form, name));
+}
+
+/** Un número que puede quedar vacío: vacío es «no hay dato»; algo que no se entiende es un error. */
+function optionalNumber(form: FormData, name: string): number | null | undefined {
+  return text(form, name) === "" ? undefined : number(form, name);
+}
+
+const CENTS_PER_EURO = 100;
+
+/** Un importe en euros que puede quedar vacío, pasado a céntimos. */
+function optionalCents(form: FormData, name: string): number | null | undefined {
+  const euros = optionalNumber(form, name);
+  return typeof euros === "number" ? Math.round(euros * CENTS_PER_EURO) : euros;
 }
 
 /** Los dos precios de la potencia comparten unidad en el formulario. */
@@ -57,5 +73,26 @@ export function parseTariffForm(form: FormData): unknown {
     powerPrice: powerPrice(form),
     energyPrice,
     notes: optionalText(form, "notes"),
+  };
+}
+
+/** Los datos de una factura, tal como los deja el asesor al revisarlos. */
+export function parseInvoiceForm(form: FormData): unknown {
+  const cups = optionalText(form, "cups");
+  return {
+    holder: text(form, "holder"),
+    supplyAddress: optionalText(form, "supplyAddress"),
+    cups: cups === undefined ? undefined : normalizeCups(cups),
+    currentProvider: optionalText(form, "currentProvider"),
+    accessTariff: normalizeAccessTariff(text(form, "accessTariff")),
+    periodStart: optionalText(form, "periodStart"),
+    periodEnd: optionalText(form, "periodEnd"),
+    days: number(form, "days"),
+    powerKw: { p1: number(form, "powerKw.p1"), p2: number(form, "powerKw.p2") },
+    energyKwh: { p1: number(form, "energyKwh.p1"), p2: number(form, "energyKwh.p2"), p3: number(form, "energyKwh.p3") },
+    powerPrice: powerPrice(form),
+    energyPrice: { p1: number(form, "energyPrice.p1"), p2: number(form, "energyPrice.p2"), p3: number(form, "energyPrice.p3") },
+    meterRentalCents: optionalCents(form, "meterRentalCents"),
+    invoiceTotalCents: optionalCents(form, "invoiceTotalCents"),
   };
 }

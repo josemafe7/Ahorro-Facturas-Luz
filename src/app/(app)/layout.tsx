@@ -1,4 +1,4 @@
-import { AppSidebar, BrandLink, SidebarUser } from "@/components/app-sidebar";
+import { AppSidebar, BrandLink, NewStudyLink, SidebarUser } from "@/components/app-sidebar";
 import { MobileTopBar } from "@/components/mobile-top-bar";
 import { requireUser } from "@/lib/session";
 
@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <AppSidebar user={user} />
-      <MobileTopBar brand={<BrandLink />} user={<SidebarUser user={user} />} />
+      <MobileTopBar brand={<BrandLink />} primaryAction={<NewStudyLink />} user={<SidebarUser user={user} />} />
       <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 p-4 md:p-8">{children}</main>
     </div>
   );

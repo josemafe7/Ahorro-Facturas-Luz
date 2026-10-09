@@ -7,7 +7,7 @@ import { AppNav } from "@/components/app-nav";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 /** La barra superior del móvil: la marca y el botón que abre el menú. */
-export function MobileTopBar({ brand, user }: { brand: ReactNode; user: ReactNode }) {
+export function MobileTopBar({ brand, primaryAction, user }: { brand: ReactNode; primaryAction: ReactNode; user: ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -25,6 +25,8 @@ export function MobileTopBar({ brand, user }: { brand: ReactNode; user: ReactNod
             <SheetTitle className="text-white">Menú</SheetTitle>
             <SheetDescription className="sr-only">Secciones de la app y cierre de sesión</SheetDescription>
           </SheetHeader>
+          {/* Al pulsar cualquier enlace del menú, el menú se cierra. */}
+          <div onClick={() => setOpen(false)}>{primaryAction}</div>
           <div className="flex-1">
             <AppNav onNavigate={() => setOpen(false)} />
           </div>

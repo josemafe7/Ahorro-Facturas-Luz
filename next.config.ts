@@ -14,8 +14,15 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
 ];
 
+// Una factura puede pesar hasta 10 MB (regla F1): se deja un poco de margen para el envoltorio del envío.
+const MAX_UPLOAD_SIZE = "11mb";
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    serverActions: { bodySizeLimit: MAX_UPLOAD_SIZE },
+    proxyClientMaxBodySize: MAX_UPLOAD_SIZE,
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

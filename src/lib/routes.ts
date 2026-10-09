@@ -8,6 +8,7 @@ export const routes = {
   studies: HOME_PATH,
   newStudy: "/estudios/nuevo",
   study: (id: string) => `/estudios/${id}`,
+  studyComparison: (id: string) => `/estudios/${id}/comparativa`,
   studyPdf: (id: string) => `/estudios/${id}/pdf`,
   catalog: "/catalogo",
   newOffer: "/catalogo/nueva",

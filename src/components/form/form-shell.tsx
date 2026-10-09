@@ -9,27 +9,31 @@ import { NO_FEEDBACK, type FormFeedback, type FormState } from "@/lib/form-state
 
 /**
  * El armazón de un formulario que guarda con una Server Action: el aviso de error arriba, los campos y los
- * botones abajo. Los campos reciben los errores y lo que se había escrito.
+ * botones abajo. Los campos reciben los errores, las dudas y lo que se había escrito.
  */
 export function FormShell({
   action,
   submitLabel,
   pendingLabel = "Guardando…",
   cancelHref,
+  doubts,
   children,
 }: {
   action: (state: FormState, form: FormData) => Promise<FormState>;
   submitLabel: string;
   pendingLabel?: string;
   cancelHref?: string;
+  /** Los campos que conviene revisar y por qué (regla R1). */
+  doubts?: Record<string, string>;
   children: (feedback: FormFeedback) => ReactNode;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, null);
+  const feedback = { ...(state?.feedback ?? NO_FEEDBACK), doubts };
 
   return (
     <form action={formAction} className="flex flex-col gap-6" noValidate>
       {state && !state.ok && <Notice tone="error">{state.message}</Notice>}
-      {children(state?.feedback ?? NO_FEEDBACK)}
+      {children(feedback)}
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
           {pending ? pendingLabel : submitLabel}

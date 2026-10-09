@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { formatNumber } from "@/lib/format";
+import { formatAmount, formatNumber } from "@/lib/format";
 import type { FormFeedback } from "@/lib/form-state";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +48,7 @@ export function NumberField({
   label,
   unit,
   value,
+  money = false,
   help,
   form,
   children,
@@ -55,6 +56,8 @@ export function NumberField({
   name: string;
   label: string;
   unit?: string;
+  /** Un importe en euros: se enseña siempre con dos decimales. */
+  money?: boolean;
   /** El valor guardado. Si el último envío falló, se enseña lo que se había escrito. */
   value?: number | null;
   help?: ReactNode;
@@ -63,7 +66,7 @@ export function NumberField({
   children?: ReactNode;
 }) {
   const state = fieldState(name, form);
-  const saved = value === undefined || value === null ? "" : formatNumber(value);
+  const saved = value === undefined || value === null ? "" : money ? formatAmount(value) : formatNumber(value);
   const initial = form.submitted?.[name] ?? saved;
   return (
     <Field data-invalid={state.invalid}>

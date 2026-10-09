@@ -17,6 +17,11 @@ export function formatCents(cents: number): string {
   return `${moneyFormat.format(cents / 100)} €`;
 }
 
+/** Un importe en euros sin el símbolo, para un campo de formulario: `0.8` → `0,80` */
+export function formatAmount(euros: number): string {
+  return moneyFormat.format(euros);
+}
+
 /** Una cantidad o un precio, con los decimales que tenga: `0.123288` → `0,123288` */
 export function formatNumber(value: number): string {
   return numberFormat.format(value);

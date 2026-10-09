@@ -114,7 +114,9 @@ como una clave filtrada.
   Prisma (`$queryRaw` con comillas invertidas); nunca las variantes `Unsafe` con texto que venga del usuario.
 - React escapa el texto por defecto: `dangerouslySetInnerHTML`, solo con HTML saneado (por ejemplo, con
   DOMPurify).
-- Archivos: tipo y tamaño máximo comprobados en el servidor; el nombre original no se usa como ruta.
+- Archivos: tipo y tamaño máximo comprobados en el servidor; el nombre original no se usa como ruta. El tipo
+  se decide por los primeros bytes del archivo, no por su nombre ni por lo que diga el navegador. El tope de
+  una petición está en `next.config.ts`, un poco por encima del archivo más grande que se admite.
 - Webhooks: se verifica su firma antes de hacer nada.
 - Redirecciones, solo a rutas de la propia app. Si el servidor descarga una URL que da el usuario, solo de
   dominios permitidos.

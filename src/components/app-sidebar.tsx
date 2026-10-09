@@ -1,11 +1,14 @@
+import { PlusIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 import { AppNav } from "@/components/app-nav";
 import { SignOutButton } from "@/components/sign-out-button";
+import { buttonVariants } from "@/components/ui/button";
 import { appConfig } from "@/config/app";
-import { HOME_PATH } from "@/lib/routes";
+import { HOME_PATH, routes } from "@/lib/routes";
 import type { SessionUser } from "@/lib/session";
+import { cn } from "@/lib/utils";
 
 const { brand } = appConfig;
 
@@ -14,6 +17,16 @@ export function BrandLink() {
     <Link href={HOME_PATH} className="flex items-center gap-3 rounded-md font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring">
       <Image src={brand.logo} alt="" width={28} height={28} />
       {brand.name}
+    </Link>
+  );
+}
+
+/** El botón «Nuevo estudio», siempre a la vista: es lo que más se hace en la app. */
+export function NewStudyLink() {
+  return (
+    <Link href={routes.newStudy} className={cn(buttonVariants({ size: "lg" }), "w-full justify-start gap-2 px-3")}>
+      <PlusIcon aria-hidden />
+      {appConfig.sector.texts.study.new}
     </Link>
   );
 }
@@ -38,6 +51,7 @@ export function AppSidebar({ user }: { user: SessionUser }) {
       <div className="px-1 pt-1">
         <BrandLink />
       </div>
+      <NewStudyLink />
       <div className="flex-1">
         <AppNav />
       </div>

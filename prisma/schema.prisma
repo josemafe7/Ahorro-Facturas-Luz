@@ -25,6 +25,9 @@ model User {
   accounts      Account[]
   settings      SectorSettings[]
   offers        Offer[]
+  files         StoredFile[]
+  studies       Study[]
+  aiReadings    AiReading[]
 
   @@map("user")
 }
@@ -108,4 +111,58 @@ model Offer {
 
   @@index([userId, sector])
   @@map("offer")
+}
+
+/// Un archivo subido por un asesor: una factura, un tarifario o su logo. Vive en la carpeta privada.
+model StoredFile {
+  id         String   @id @default(cuid())
+  userId     String
+  /// El nombre con el que está guardado: aleatorio, nunca el original.
+  storageKey String   @unique
+  mimeType   String
+  size       Int
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studies    Study[]
+
+  @@index([userId])
+  @@map("stored_file")
+}
+
+/// Un estudio: de la factura del cliente a la propuesta.
+model Study {
+  id            String      @id @default(cuid())
+  userId        String
+  sector        String
+  /// draft, sent, accepted o contracted
+  status        String      @default("draft")
+  /// El titular, para la lista.
+  customerName  String?
+  fileId        String?
+  /// Cómo fue la lectura con IA: read, not-recognized, failed, limit o not-configured.
+  readingStatus String?
+  /// Los datos del documento tal como están ahora, revisados o no.
+  draft         String      @default("{}")
+  /// Los datos que conviene revisar y por qué.
+  doubts        String      @default("{}")
+  /// Cuándo dio el asesor los datos por buenos. Sin esto no hay cálculo.
+  reviewedAt    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file          StoredFile? @relation(fields: [fileId], references: [id])
+
+  @@index([userId, sector, createdAt])
+  @@map("study")
+}
+
+/// Cada lectura de IA que pide un asesor, para aplicar el límite por hora.
+model AiReading {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("ai_reading")
 }

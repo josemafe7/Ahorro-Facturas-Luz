@@ -46,5 +46,10 @@ Qué se prueba y cómo, para demostrar que el código funciona sin que las prueb
   archivo de base de datos y su propia carpeta de archivos, que se crean desde las migraciones y el seed
   antes de ejecutarlas y se pueden borrar sin perder nada. Nunca usan el archivo de desarrollo ni uno con
   datos reales.
-- Los servicios de pago (IA, emails, pagos) se simulan: las pruebas no los llaman de verdad.
+- Los servicios de pago (IA, emails, pagos) se simulan: las pruebas no los llaman de verdad. La IA se simula
+  de dos formas, y en ninguna hay un «modo de prueba» dentro de la app. En Vitest, con el modelo simulado del
+  AI SDK, que se le pasa a la función que lee. En Playwright y para probar a mano sin gastar, con
+  `e2e/fake-openrouter.ts`: un servidor que responde como OpenRouter, al que la app se apunta con
+  `OPENROUTER_BASE_URL`, y que «lee» las facturas de `ejemplos/`.
+- La lectura real con la IA de las facturas de ejemplo se comprueba a mano, porque cuesta dinero.
 - Cuando el proyecto esté en GitHub, se propone ejecutar las pruebas automáticamente en cada subida.

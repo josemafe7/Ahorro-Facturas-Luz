@@ -8,6 +8,8 @@
  */
 import type { z } from "zod";
 
+import type { DocumentReading, Reader } from "./reading";
+
 /** Una línea de un cálculo: qué es, cómo se ha calculado y cuánto da. */
 export type BreakdownLine = {
   id: string;
@@ -53,6 +55,8 @@ export type Sector<TDocument, TOffer, TSettings> = {
   id: string;
   /** Valida los datos revisados del documento. Lo que no pase por aquí no se calcula. */
   documentSchema: z.ZodType<TDocument>;
+  /** Lee un documento guardado a medio revisar sin fiarse de su forma. */
+  draftSchema: z.ZodType<Draft<TDocument>>;
   offerSchema: z.ZodType<TOffer>;
   settingsSchema: z.ZodType<TSettings>;
   defaultSettings: TSettings;
@@ -62,8 +66,13 @@ export type Sector<TDocument, TOffer, TSettings> = {
   currentCost(document: TDocument, settings: TSettings): Breakdown;
   /** Lo que pagaría con una oferta, para el mismo periodo y el mismo consumo. */
   offerCost(document: TDocument, offer: TOffer, settings: TSettings): Breakdown;
+  /** Cómo se lee el documento con IA. El tipo de lo que devuelve la IA es cosa del sector. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cada sector define su propio formato de lectura
+  documentReader: Reader<any, DocumentReading<TDocument>>;
   /** Las comprobaciones que no necesitan IA: datos que no cuadran o que no son razonables. */
   findDoubts(draft: Draft<TDocument>): Doubt[];
+  /** A nombre de quién está el documento, si ya se sabe, para reconocer el estudio en la lista. */
+  customerName(draft: Draft<TDocument>): string | undefined;
   /** Cómo se llama una oferta en una lista: «Comercializadora · Tarifa». */
   offerLabel(offer: TOffer): string;
 };

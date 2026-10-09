@@ -22,6 +22,12 @@ const fee = (cents: number): Breakdown => ({
 const phoneSector: Sector<PhoneBill, PhonePlan, Record<string, never>> = {
   id: "phone",
   documentSchema: z.object({ monthlyFeeCents: z.number(), days: z.number() }),
+  draftSchema: z.object({ monthlyFeeCents: z.number().optional(), days: z.number().optional() }),
+  documentReader: {
+    instructions: "Lee la factura del móvil.",
+    schema: z.object({ fee: z.number() }),
+    interpret: (raw: { fee: number }) => ({ recognized: true, draft: { monthlyFeeCents: raw.fee }, doubts: [] }),
+  },
   offerSchema: z.object({ operator: z.string(), monthlyFeeCents: z.number() }),
   settingsSchema: z.object({}),
   defaultSettings: {},
@@ -29,6 +35,7 @@ const phoneSector: Sector<PhoneBill, PhonePlan, Record<string, never>> = {
   currentCost: (bill) => fee(bill.monthlyFeeCents),
   offerCost: (_bill, plan) => fee(plan.monthlyFeeCents),
   findDoubts: () => [],
+  customerName: () => undefined,
   offerLabel: (plan) => plan.operator,
 };
 

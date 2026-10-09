@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { Draft } from "@/engine/types";
+
 import { ELECTRICITY_TEXTS } from "./texts";
 import { POWER_PRICE_UNITS } from "./units";
 
@@ -28,6 +30,17 @@ const price = z
   .min(0, "El precio no puede ser negativo")
   .max(MAX_PRICE, "El precio es demasiado alto");
 
+const amountCents = z
+  .number({ error: "Escribe el importe en euros" })
+  .int("Escribe el importe en euros")
+  .min(0, "El importe no puede ser negativo")
+  .max(MAX_CENTS, "El importe es demasiado alto");
+
+/** «2.0 td», «2.0TD » o «2,0TD» son la misma tarifa de acceso. */
+export function normalizeAccessTariff(tariff: string): string {
+  return tariff.replace(/\s/g, "").replace(",", ".").toUpperCase();
+}
+
 /** El precio de la potencia, con la unidad en la que viene (regla R4). */
 export const powerPriceSchema = z.object({
   amount: price,
@@ -44,7 +57,11 @@ export const invoiceSchema = z.object({
   cups: optionalText(30),
   currentProvider: optionalText(120),
   // Regla R3: solo 2.0TD.
-  accessTariff: z.literal(ELECTRICITY_TEXTS.accessTariff, { error: ELECTRICITY_TEXTS.onlySupportedTariff }),
+  accessTariff: z
+    .string({ error: ELECTRICITY_TEXTS.onlySupportedTariff })
+    .refine((tariff) => normalizeAccessTariff(tariff) === ELECTRICITY_TEXTS.accessTariff, {
+      error: ELECTRICITY_TEXTS.onlySupportedTariff,
+    }),
   periodStart: isoDate.optional(),
   periodEnd: isoDate.optional(),
   days: z
@@ -57,12 +74,41 @@ export const invoiceSchema = z.object({
   powerPrice: z.object({ p1: powerPriceSchema, p2: powerPriceSchema }),
   energyPrice: z.object({ p1: price, p2: price, p3: price }),
   /** El alquiler del contador que trae la factura, en céntimos. */
-  meterRentalCents: z.number().int().min(0).max(MAX_CENTS).optional(),
+  meterRentalCents: amountCents.optional(),
   /** El total impreso en la factura, en céntimos: sirve para avisar si el cálculo no cuadra (regla C9). */
-  invoiceTotalCents: z.number().int().min(0).max(MAX_CENTS).optional(),
+  invoiceTotalCents: amountCents.optional(),
 });
 
 export type Invoice = z.infer<typeof invoiceSchema>;
+
+const draftNumber = z.number().optional();
+const draftText = z.string().optional();
+
+/**
+ * Una factura a medio revisar, tal como se guarda antes de darla por buena: los mismos datos, pero cualquiera
+ * puede faltar o no ser válido todavía. Sirve para leer lo guardado sin fiarse de su forma.
+ */
+export const invoiceDraftSchema: z.ZodType<Draft<Invoice>> = z.object({
+  holder: draftText,
+  supplyAddress: draftText,
+  cups: draftText,
+  currentProvider: draftText,
+  accessTariff: draftText,
+  periodStart: draftText,
+  periodEnd: draftText,
+  days: draftNumber,
+  powerKw: z.object({ p1: draftNumber, p2: draftNumber }).optional(),
+  energyKwh: z.object({ p1: draftNumber, p2: draftNumber, p3: draftNumber }).optional(),
+  powerPrice: z
+    .object({
+      p1: z.object({ amount: draftNumber, unit: z.enum(POWER_PRICE_UNITS).optional() }).optional(),
+      p2: z.object({ amount: draftNumber, unit: z.enum(POWER_PRICE_UNITS).optional() }).optional(),
+    })
+    .optional(),
+  energyPrice: z.object({ p1: draftNumber, p2: draftNumber, p3: draftNumber }).optional(),
+  meterRentalCents: draftNumber,
+  invoiceTotalCents: draftNumber,
+});
 
 /** Una tarifa del catálogo: de precio fijo, con uno o tres precios de energía (regla T2). */
 export const tariffSchema = z.object({

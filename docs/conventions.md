@@ -77,6 +77,8 @@ Context7:
   del negocio y un usuario de prueba de cada tipo. Lo usan las pruebas, la demo y quien descargue el
   proyecto para probarlo. No se crea una segunda base de datos ni un modo de demostración aparte: la app
   es la misma, con datos de ejemplo.
+- `ejemplos/`: las facturas y el tarifario inventados para la demo. No se editan a mano: salen de
+  `scripts/sample-invoices.ts` con `pnpm samples`.
 - Cuando el proyecto crezca, el código se agrupa por funcionalidad, y se explica en `docs/architecture.md`.
 
 ## TypeScript y nombres

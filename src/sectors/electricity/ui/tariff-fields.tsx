@@ -25,14 +25,21 @@ export function PowerPriceUnitSelect({ value, form }: { value?: string; form: Fo
       <label htmlFor={name} className="text-sm font-medium">
         Los precios de la potencia son
       </label>
-      <Select id={name} name={name} defaultValue={form.submitted?.[name] ?? value ?? "day"} className="w-40">
+      <Select
+        key={form.submitted?.[name] ?? value ?? "day"}
+        id={name}
+        name={name}
+        defaultValue={form.submitted?.[name] ?? value ?? "day"}
+        className="w-40"
+      >
         {POWER_PRICE_UNITS.map((unit) => (
           <option key={unit} value={unit}>
             {POWER_PRICE_UNIT_LABELS[unit]}
           </option>
         ))}
       </Select>
-      <FieldMessages name="powerPrice.p1.unit" form={form} />
+      {/* El error llega con el nombre del dato guardado; la duda, con el del campo del formulario. */}
+      <FieldMessages name={form.errors["powerPrice.p1.unit"] ? "powerPrice.p1.unit" : name} form={form} />
     </div>
   );
 }

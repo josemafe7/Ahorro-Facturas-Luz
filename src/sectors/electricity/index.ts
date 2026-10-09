@@ -8,7 +8,8 @@ import type { Sector } from "@/engine/types";
 
 import { findInvoiceDoubts } from "./checks";
 import { calculateBill, type BillInput } from "./formula";
-import { invoiceSchema, tariffSchema, type Invoice, type Tariff } from "./schema";
+import { invoiceReader } from "./reading";
+import { invoiceDraftSchema, invoiceSchema, tariffSchema, type Invoice, type Tariff } from "./schema";
 import { DEFAULT_ELECTRICITY_SETTINGS, electricitySettingsSchema, type ElectricitySettings } from "./settings";
 import { toPricePerDay } from "./units";
 
@@ -32,6 +33,8 @@ function tariffEnergyPrice(tariff: Tariff): BillInput["energyPrice"] {
 export const electricitySector: Sector<Invoice, Tariff, ElectricitySettings> = {
   id: "electricity",
   documentSchema: invoiceSchema,
+  draftSchema: invoiceDraftSchema,
+  documentReader: invoiceReader,
   offerSchema: tariffSchema,
   settingsSchema: electricitySettingsSchema,
   defaultSettings: DEFAULT_ELECTRICITY_SETTINGS,
@@ -59,6 +62,8 @@ export const electricitySector: Sector<Invoice, Tariff, ElectricitySettings> = {
     ),
 
   findDoubts: findInvoiceDoubts,
+
+  customerName: (draft) => draft.holder,
 
   offerLabel: (tariff) => `${tariff.provider} · ${tariff.name}`,
 };

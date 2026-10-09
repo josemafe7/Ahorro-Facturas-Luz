@@ -13,7 +13,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "prisma/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "prisma/**/*.test.ts", "scripts/**/*.test.ts"],
     // Sin esto recogería también las pruebas de Playwright.
     exclude: ["e2e/**", "node_modules/**"],
     globalSetup: ["src/test/global-setup.ts"],
