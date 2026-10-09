@@ -23,6 +23,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  settings      SectorSettings[]
 
   @@map("user")
 }
@@ -73,4 +74,21 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Los datos de la app. Toda tabla con datos de un asesor lleva `userId`, su dueño (docs/security.md).
+// Lo propio de cada sector se guarda como JSON en `data`: lo valida el módulo del sector al leer y al guardar.
+// ---------------------------------------------------------------------------------------------------------
+
+/// Los impuestos y cargos con los que calcula cada asesor.
+model SectorSettings {
+  userId    String
+  sector    String
+  data      String
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sector])
+  @@map("sector_settings")
 }

@@ -50,12 +50,23 @@ Context7:
 - `src/config/app.ts`: la marca (nombre, logo y colores) y los textos generales del sector. Es el único
   sitio donde se escriben: las pantallas los leen de ahí y el layout raíz pasa los colores al tema.
 - `src/lib/`: utilidades y clientes de servicios (Prisma, sesión, IA).
+- `src/engine/`: el motor, que no sabe nada de ningún negocio: comparar un documento con un catálogo de
+  ofertas y calcular el ahorro. Define el contrato `Sector`, lo que tiene que aportar un sector.
+- `src/sectors/<sector>/`: todo lo propio de un sector, y solo ahí: qué se lee del documento, cómo se
+  comprueba, la fórmula, sus ajustes, cómo se leen sus formularios y sus piezas de pantalla (`ui/`). Las
+  pantallas usan el sector activo a través de `src/sectors/index.ts`, `forms.ts` y `ui.ts`, sin nombrarlo.
+- `src/components/form/`: los campos de formulario compartidos. Un formulario conserva lo que la persona
+  escribió si el envío falla (`src/lib/form-state.ts`).
+- El dinero se calcula en céntimos enteros y con decimales exactos (`src/lib/decimal.ts`), nunca con los
+  números con decimales de JavaScript.
 - `src/data/`: el acceso a datos, con `import 'server-only'`.
 - Lo que solo usa una ruta va junto a ella, en carpetas privadas (`_components/`, `_lib/`).
 - El proxy de Next.js también va en `src/`. En la raíz se quedan la configuración, `public/` y `.env.local`.
 - Las Server Actions son finas: validan con Zod y llaman a `src/data/`.
 - Componentes de servidor por defecto. `'use client'` solo en los que necesitan interacción, y lo más abajo
   posible en el árbol.
+- Después de crear una migración hay que reiniciar `pnpm dev`: el servidor en marcha sigue usando la
+  estructura anterior.
 - La base de datos cambia solo con migraciones: se cambia `prisma/schema.prisma` y Prisma crea el archivo de
   la migración en `prisma/migrations/`, que se sube a Git. Nunca con SQL suelto ni tocando a mano el archivo
   de la base de datos: así se puede volver a crear entera desde el repositorio. El cliente de Prisma y sus
