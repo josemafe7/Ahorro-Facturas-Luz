@@ -47,6 +47,8 @@ Context7:
 - Si existe `DESIGN.md`, sus colores, tipografía, bordes y espaciado se ponen una sola vez como tema (las
   variables de shadcn/ui y Tailwind en los estilos globales) y todas las pantallas lo usan. El código que
   exporta una herramienta de diseño es una referencia para ver cómo debe quedar, no código para pegar.
+- `src/config/app.ts`: la marca (nombre, logo y colores) y los textos generales del sector. Es el único
+  sitio donde se escriben: las pantallas los leen de ahí y el layout raíz pasa los colores al tema.
 - `src/lib/`: utilidades y clientes de servicios (Prisma, sesión, IA).
 - `src/data/`: el acceso a datos, con `import 'server-only'`.
 - Lo que solo usa una ruta va junto a ella, en carpetas privadas (`_components/`, `_lib/`).
@@ -58,6 +60,8 @@ Context7:
   la migración en `prisma/migrations/`, que se sube a Git. Nunca con SQL suelto ni tocando a mano el archivo
   de la base de datos: así se puede volver a crear entera desde el repositorio. El cliente de Prisma y sus
   tipos se generan, no se escriben a mano.
+- Un script que usa código de servidor fuera de Next.js, como el seed, se ejecuta con
+  `--conditions=react-server`: sin eso, `server-only` lo detiene.
 - Los datos de ejemplo van en un seed dentro del repositorio, que se carga con `pnpm seed`: datos realistas
   del negocio y un usuario de prueba de cada tipo. Lo usan las pruebas, la demo y quien descargue el
   proyecto para probarlo. No se crea una segunda base de datos ni un modo de demostración aparte: la app

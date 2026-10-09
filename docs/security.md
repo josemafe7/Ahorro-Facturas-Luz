@@ -54,6 +54,18 @@ como una clave filtrada.
 - Un parche de seguridad con menos de 7 días se instala excluyendo solo ese paquete del margen con
   `minimumReleaseAgeExclude`, con permiso, y la excepción se quita después.
 - No se publica con vulnerabilidades altas o críticas de `pnpm audit` sin resolver.
+- Los scripts de instalación aprobados y denegados están, uno a uno y con su motivo, en `allowBuilds` de
+  `pnpm-workspace.yaml`. Uno nuevo hace fallar la instalación hasta que se decide.
+- Prisma se queda en la versión 7.9.1. La herramienta `prisma` 7.10.0 se publicó a mano, sin la firma de
+  procedencia que llevaban todas las anteriores, y la política de confianza la rechaza. No se hace excepción:
+  se sube cuando haya una versión publicada con firma. Sus tres piezas (`prisma`, `@prisma/client` y el
+  adaptador de SQLite) van siempre en la misma versión exacta, y nunca se instalan con `@latest`, porque esa
+  etiqueta apunta ahora a una versión candidata.
+- ESLint va en la serie 9, que ya no tiene soporte, porque la configuración de Next.js todavía no funciona
+  con la 10. Es una herramienta de desarrollo y no forma parte de la app publicada. Se sube en cuanto
+  Next.js lo permita.
+- El proyecto fija Node.js 24 (LTS) en `package.json` y pnpm lo descarga solo: no depende del Node que haya
+  instalado en cada ordenador.
 
 ## Datos
 
@@ -228,3 +240,4 @@ Una app publicada se queda vieja aunque nadie la toque. Cuando pida el mantenimi
 
 | Punto | Motivo | Aprobada por y fecha |
 |---|---|---|
+| La política de confianza de pnpm (`trustPolicy: no-downgrade`) no se aplica a `semver@6.3.1` | Es un parche de seguridad de 2023 de la serie 6, publicado por el equipo de npm sin firma de procedencia cuando la serie 7 ya la llevaba. No existe versión firmada de la serie 6, y la necesita la revisión de código que trae Next.js. Se excluye esa versión exacta y ninguna más. | Josema, 2026-10-09 |

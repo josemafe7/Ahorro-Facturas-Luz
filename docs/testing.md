@@ -33,6 +33,9 @@ Qué se prueba y cómo, para demostrar que el código funciona sin que las prueb
 - Vitest, con la prueba junto al código que prueba (`invoice.test.ts`). No admite componentes de servidor
   asíncronos: esos se prueban con Playwright. Excluye `e2e/` en su configuración, porque por defecto
   recogería también los `.spec.ts` de Playwright.
+- Cada archivo de pruebas de Vitest se ejecuta en su propio proceso, con su copia de una base de datos
+  recién creada desde las migraciones: por eso no se pisan ni dependen del orden. En las pruebas,
+  `server-only` se sustituye por un módulo vacío para poder probar el código de servidor fuera de Next.js.
 - Playwright, en `e2e/` y con Chromium (`pnpm exec playwright install chromium` la primera vez). Arranca la
   app él solo (`webServer`) y, como recomienda Next.js, prueba la versión compilada (`pnpm build` y
   `pnpm start`): por eso al cerrar la fase no hace falta compilar aparte.

@@ -1,0 +1,25 @@
+# Seguridad de las dependencias (ver docs/security.md)
+
+# No se instala ninguna versión publicada hace menos de 7 días (en minutos).
+minimumReleaseAge: 10080
+
+# Se rechaza una versión publicada con menos garantías que las anteriores del mismo paquete.
+trustPolicy: no-downgrade
+
+# Excepciones a la política de confianza, aprobadas una a una (ver «Excepciones aprobadas» en
+# docs/security.md). Solo versiones exactas.
+trustPolicyExclude:
+  # Parche de seguridad de 2023 de la serie 6, publicado por el equipo de npm sin firma de procedencia.
+  # No existe versión firmada de esa serie y la necesita la revisión de código de Next.js.
+  - semver@6.3.1
+
+# Scripts de instalación de las dependencias: solo se ejecutan los aprobados uno a uno.
+allowBuilds:
+  # Descarga la pieza nativa de SQLite ya compilada para este ordenador.
+  better-sqlite3: true
+  # Denegados: la app funciona sin ejecutarlos.
+  '@prisma/engines': false
+  esbuild: false
+  prisma: false
+  sharp: false
+  unrs-resolver: false

@@ -145,7 +145,7 @@ La fórmula completa, con sus fuentes oficiales y un ejemplo hecho a mano, está
   0,026630 € al día (0,81 € al mes); y financiación del bono social de 0,024688 € al día (9,011295 € al año).
 - (A3) El asesor puede cambiar su marca: nombre comercial, logo, color y datos de contacto. Es la que sale en
   el PDF.
-- (A4) El logo es una imagen PNG, JPG o WebP de hasta 2 MB. Cualquier otro archivo se rechaza.
+- (A4) El logo es una imagen PNG o JPG de hasta 2 MB. Cualquier otro archivo se rechaza.
 
 ### Marca y sector
 
@@ -211,6 +211,12 @@ para usar, con todas sus pantallas. Después va solo lo que acordamos que puede 
 la app ya terminada va como fase nueva.
 
 - [ ] Fase 1 · MVP: inicio de sesión, lista de estudios con sus estados, subir y leer la factura, revisar, calcular y comparar, estudio en PDF con la marca del asesor, catálogo de tarifas (a mano y leyendo un tarifario), ajustes de impuestos y de marca, y datos de ejemplo — se comprueba: con los datos de ejemplo cargados, entro como el asesor de prueba, subo una factura de ejemplo, corrijo un dato dudoso, calculo, descargo el PDF y veo el estudio en la lista, donde le cambio el estado; añado una tarifa a mano y otra desde el tarifario de ejemplo; y cambio el IVA en ajustes y compruebo que un estudio nuevo lo usa y uno antiguo no cambia.
+  - [x] Tramo 1 · Base y acceso: el proyecto creado, el tema del diseño, la marca en un solo archivo, la base de datos, el inicio de sesión, el menú con las pantallas vacías y el asesor de prueba (E1 a E4, M1).
+  - [ ] Tramo 2 · Cálculo y ajustes: el motor, el módulo de la luz con su fórmula y sus comprobaciones, y la pantalla de impuestos y cargos (C1 a C7, R3 a R5, F6 a F8, A1, A2, M2).
+  - [ ] Tramo 3 · Catálogo: ver, añadir, cambiar, desactivar y borrar tarifas, con las tarifas de ejemplo (T1 a T4).
+  - [ ] Tramo 4 · Subir, leer y revisar: la subida a la carpeta privada, la lectura con IA con sus límites y fallos, la pantalla de revisión y las facturas de ejemplo (F1 a F5, F9 a F12, R1, R2, V1, V2, D2).
+  - [ ] Tramo 5 · Comparativa, estudio y PDF: la comparación con el catálogo y sus avisos, el PDF con la marca del asesor, la lista con sus estados, el borrado y los estudios de ejemplo (C8 a C12, P1 a P5, L1 a L5, T6, A3, A4, D1).
+  - [ ] Tramo 6 · Tarifario y cierre: las tarifas leídas de un tarifario, el repaso del diseño en todas las pantallas, el recorrido completo con Playwright, `README.md` y `docs/architecture.md` (T5).
 - [ ] Fase 2 · Captación y 3.0TD: una página pública donde el cliente sube su factura y deja su contacto, que le llega al asesor como oportunidad; y la tarifa de acceso 3.0TD — se comprueba: sin sesión, subo una factura en la página pública y dejo un contacto, y el asesor la ve como oportunidad y la convierte en estudio; y subo una factura 3.0TD de ejemplo y obtengo su estudio.
 - [ ] Fase 3 · Equipos: varios asesores en una misma cuenta — se comprueba: dos asesores de la misma cuenta ven los mismos estudios y el mismo catálogo, y uno de otra cuenta no ve nada de ellos.
 
