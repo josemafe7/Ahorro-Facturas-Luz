@@ -67,8 +67,9 @@ Context7:
 - Las Server Actions son finas: validan con Zod y llaman a `src/data/`.
 - Componentes de servidor por defecto. `'use client'` solo en los que necesitan interacción, y lo más abajo
   posible en el árbol.
-- Después de crear una migración hay que reiniciar `pnpm dev`: el servidor en marcha sigue usando la
-  estructura anterior.
+- Después de crear una migración hay que regenerar el cliente de Prisma (`pnpm exec prisma generate`: desde
+  Prisma 7, `migrate dev` ya no lo hace solo) y reiniciar `pnpm dev`, porque el servidor en marcha sigue
+  usando la estructura anterior.
 - La base de datos cambia solo con migraciones: se cambia `prisma/schema.prisma` y Prisma crea el archivo de
   la migración en `prisma/migrations/`, que se sube a Git. Nunca con SQL suelto ni tocando a mano el archivo
   de la base de datos: así se puede volver a crear entera desde el repositorio. El cliente de Prisma y sus

@@ -10,8 +10,18 @@ silencio.
 - Next.js manda al navegador toda variable que empieza por `NEXT_PUBLIC_`: solo la llevan las que están
   hechas para ser públicas. Esta app no tiene ninguna.
 - Las dos claves de la app son secretas y solo las usa el servidor: `OPENROUTER_API_KEY`, que paga las
-  lecturas de la IA, y `BETTER_AUTH_SECRET`, que protege las sesiones: quien la conozca puede hacerse pasar
-  por cualquier usuario.
+  lecturas de la IA cuando el asesor no ha puesto la suya, y `BETTER_AUTH_SECRET`, que protege las sesiones
+  (quien la conozca puede hacerse pasar por cualquier usuario) y de la que sale la llave que cifra las
+  claves guardadas en la base de datos.
+- La única clave que se guarda fuera de `.env.local` es la de OpenRouter que el asesor escribe en Ajustes
+  (decisión 0010):
+  - Se comprueba con OpenRouter antes de guardarla, como mucho 10 veces por hora y asesor.
+  - Se guarda cifrada con AES-256-GCM (`src/lib/secrets.ts`), con una llave que sale de
+    `BETTER_AUTH_SECRET` y atada a su dueño: copiada al registro de otro asesor, no se puede descifrar.
+  - Nunca vuelve al navegador, ni siquiera al formulario tras un error, y nunca aparece en los registros.
+    En pantalla solo se ven sus cuatro últimos caracteres.
+  - Si `BETTER_AUTH_SECRET` cambia, las claves guardadas ya no se pueden leer y hay que volver a
+    escribirlas: la app deja de usarlas en vez de fallar.
 - Desarrollo y producción tienen claves distintas: `.env.local` lleva las de desarrollo, y las de producción
   solo están en el sitio donde se publique.
 - Si una clave se filtra (en un commit, en una captura o en un chat con otras personas), se revoca y se crea
@@ -145,7 +155,10 @@ como una clave filtrada.
   eso Better Auth no lee ninguna cabecera (`advanced.ipAddress` en `src/lib/auth.ts`). A cambio, quien llegue
   a la pantalla de entrada puede bloquear el inicio de sesión de todos durante un minuto.
 - Las llamadas a la IA tienen tope de tokens por petición y de uso por usuario, y la clave de OpenRouter, un
-  límite de gasto puesto en su panel.
+  límite de gasto puesto en su panel. Con un límite de gasto en la clave, ni un modelo caro elegido por
+  error ni alguien que entre como el asesor pueden gastar más de lo previsto.
+- Las comprobaciones de claves de OpenRouter se cuentan en la memoria del servidor: como mucho 10 por hora y
+  asesor. Al reiniciar, la cuenta empieza de cero.
 - Next.js ya oculta en producción los errores de los Server Components; las Server Actions y los Route
   Handlers nunca devuelven `error.message`, trazas ni detalles de la base de datos.
 - Si una comprobación de seguridad falla o da error, se deniega el acceso.
@@ -202,6 +215,9 @@ cuenta.
 - Para leer una factura hay que enviarla entera, con los datos personales que traiga: es lo imprescindible
   para leerla. Pasa por OpenRouter y llega al proveedor del modelo. OpenRouter no guarda los textos salvo
   que se active en su panel, y no se activa. La app avisa al asesor de este envío antes de que suba nada.
+- La lista de modelos de OpenRouter es un dato de fuera: se comprueba su forma antes de usarla y solo se
+  guarda un modelo que esté en ella. La app solo llama a direcciones fijas de OpenRouter, nunca a una que
+  escriba el usuario.
 
 ## Datos personales
 

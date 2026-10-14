@@ -32,7 +32,8 @@ sector.
 | Base de datos (`data/`) | Usuarios, estudios, catálogo, ajustes, marca y archivos. Lo propio del sector va como JSON | SQLite |
 | Carpeta privada (`storage/`) | Las facturas y los logos subidos, con nombre aleatorio | El disco del servidor |
 | Inicio de sesión (`src/lib/auth.ts`) | Entrar y salir con correo y contraseña, sesiones y límite de intentos. El resto de rutas de cuentas de la librería está cerrado | Better Auth |
-| Lectura con IA (`src/lib/ai.ts`) | Pide al modelo que lea un documento y devuelva datos con un formato fijo | AI SDK con OpenRouter y Claude Haiku 5.5 |
+| Lectura con IA (`src/lib/ai.ts`) | Pide al modelo que lea un documento y devuelva datos con un formato fijo, con la clave y el modelo de cada asesor | AI SDK con OpenRouter; por defecto, Claude Haiku 5.5 |
+| Ajustes de IA (`src/data/ai-settings.ts`) | La clave de OpenRouter de cada asesor, cifrada (`src/lib/secrets.ts`), y el modelo que ha elegido de la lista de OpenRouter (`src/lib/openrouter.ts`) | Node.js (cifrado) y la API de modelos de OpenRouter |
 | PDF (`src/lib/pdf/`) | Pinta el estudio para el cliente | @react-pdf/renderer |
 | Aritmética del dinero (`src/lib/decimal.ts`) | Cuentas exactas en céntimos, redondeando solo donde dice la especificación | TypeScript, sin librerías |
 
@@ -70,8 +71,10 @@ comprueba que el motor funciona con un sector inventado y que no importa ninguno
 
 ## Servicios externos
 
-- **OpenRouter**, para leer facturas y tarifarios con Claude Haiku 5.5. Es el único servicio de fuera y el
-  único que cuesta dinero. Recibe el documento entero, con los datos personales que traiga. Si no hay clave
-  o falla, la app sigue funcionando y los datos se rellenan a mano.
+- **OpenRouter**, para leer facturas y tarifarios con el modelo que elija cada asesor (por defecto, Claude
+  Haiku 5.5). Es el único servicio de fuera y el único que cuesta dinero. Recibe el documento entero, con
+  los datos personales que traiga. La app le pide también la lista de modelos con sus precios, que guarda
+  una hora, y le pregunta si una clave vale antes de guardarla. Si no hay clave o falla, la app sigue
+  funcionando y los datos se rellenan a mano.
 
 No hay más: ni base de datos externa, ni correo, ni pagos, ni analítica.

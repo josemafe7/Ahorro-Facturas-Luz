@@ -55,7 +55,9 @@ Qué se prueba y cómo, para demostrar que el código funciona sin que las prueb
   de dos formas, y en ninguna hay un «modo de prueba» dentro de la app. En Vitest, con el modelo simulado del
   AI SDK, que se le pasa a la función que lee. En Playwright y para probar a mano sin gastar, con
   `e2e/fake-openrouter.ts`: un servidor que responde como OpenRouter, al que la app se apunta con
-  `OPENROUTER_BASE_URL`, y que «lee» las facturas de `ejemplos/`.
+  `OPENROUTER_BASE_URL`, y que «lee» las facturas de `ejemplos/`. También da una lista de modelos de
+  ejemplo, comprueba claves (vale la que empieza por `sk-or-v1-prueba-`) y dice con qué modelo y con qué
+  clave se pidió la última lectura, para comprobar que la app usa los de cada asesor.
 - La lectura real con la IA de las facturas de ejemplo se comprueba a mano con `pnpm ai:check`, porque
   cuesta dinero: lee cada documento de `ejemplos/` con el modelo de verdad, lo compara con lo que tiene
   impreso y dice cuánto ha costado.

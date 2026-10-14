@@ -27,7 +27,7 @@ const MESSAGES: Record<Exclude<ReadingStatus, "read">, { title: string; body: st
   },
   "not-configured": {
     title: "La lectura con IA no está configurada.",
-    body: `Falta la clave de OpenRouter en el servidor. ${MANUAL}`,
+    body: `Falta la clave de OpenRouter: ponla en Ajustes. ${MANUAL}`,
     canRetry: true,
   },
 };

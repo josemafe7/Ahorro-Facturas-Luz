@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { DOCUMENT_UPLOAD } from "@/data/files";
+import { getReadingModel } from "@/data/ai-settings";
 import { calculateStudy, createStudy, deleteStudy, readStudy, saveStudyDocument, selectStudyOffer, setStudyStatus } from "@/data/studies";
-import { getReadingModel } from "@/lib/ai";
 import { failed, type FormState } from "@/lib/form-state";
 import { idSchema } from "@/lib/ids";
 import type { Result } from "@/lib/result";
@@ -34,7 +34,7 @@ export async function createStudyAction(form: FormData): Promise<Result<never>> 
   const created = await createStudy(user.id, new Uint8Array(await file.arrayBuffer()));
   if (!created.ok) return created;
 
-  await readStudy(user.id, created.value.id, getReadingModel());
+  await readStudy(user.id, created.value.id, await getReadingModel(user.id));
   revalidatePath(routes.studies);
   redirect(routes.study(created.value.id));
 }
@@ -45,7 +45,7 @@ export async function rereadStudyAction(id: string): Promise<Result<unknown>> {
   const parsedId = idSchema.safeParse(id);
   if (!parsedId.success) return INVALID_REQUEST;
 
-  const result = await readStudy(user.id, parsedId.data, getReadingModel());
+  const result = await readStudy(user.id, parsedId.data, await getReadingModel(user.id));
   revalidatePath(routes.study(parsedId.data));
   return result;
 }

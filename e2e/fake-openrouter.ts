@@ -6,6 +6,11 @@
  * las facturas y el tarifario de `ejemplos/` por su contenido y devuelve lo que una IA leería de cada uno;
  * ante cualquier otro documento responde que no es una factura o que no trae tarifas.
  *
+ * También da una lista de modelos de ejemplo (`GET /models`) y comprueba claves (`GET /key`): vale la que
+ * empieza por `sk-or-v1-prueba-`, y ninguna clave de verdad empieza así. Para las pruebas, `GET
+ * /ultima-lectura` dice con qué modelo y con qué clave (sus cuatro últimos caracteres) se pidió la última
+ * lectura.
+ *
  * Para usarlo a mano: `pnpm exec tsx e2e/fake-openrouter.ts` y arrancar la app con
  * `OPENROUTER_API_KEY=simulada OPENROUTER_BASE_URL=http://127.0.0.1:4010`.
  */
@@ -14,6 +19,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import path from "node:path";
 
+import { SAMPLE_OPENROUTER_MODELS } from "../scripts/sample-ai-models";
 import { SAMPLE_INVOICES } from "../scripts/sample-invoices";
 import { NOT_AN_INVOICE, sampleReading } from "../scripts/sample-readings";
 import { SAMPLE_TARIFF_SHEET, SAMPLE_TARIFF_SHEET_READING } from "../scripts/sample-tariff-sheet";
@@ -56,12 +62,36 @@ function attachedFiles(value: unknown, found: Uint8Array[] = []): Uint8Array[] {
   return found;
 }
 
+const VALID_KEY_PREFIX = "Bearer sk-or-v1-prueba-";
+
+/** Con qué se pidió la última lectura, para que las pruebas lo comprueben. */
+let lastReading: { model: unknown; keyHint: string } | null = null;
+
+function json(response: import("node:http").ServerResponse, status: number, body: unknown) {
+  response.writeHead(status, { "content-type": "application/json" });
+  response.end(JSON.stringify(body));
+}
+
 export function startFakeOpenRouter(port = FAKE_OPENROUTER_PORT): Promise<Server> {
   const server = createServer((request, response) => {
+    const route = new URL(request.url ?? "/", "http://ia-simulada").pathname;
+    if (route.endsWith("/models")) return json(response, 200, SAMPLE_OPENROUTER_MODELS);
+    if (route.endsWith("/key")) {
+      const valid = request.headers.authorization?.startsWith(VALID_KEY_PREFIX) ?? false;
+      return valid
+        ? json(response, 200, { data: { label: "Clave de prueba", limit: null, usage: 0, is_free_tier: false } })
+        : json(response, 401, { error: { code: 401, message: "No auth credentials found" } });
+    }
+    if (route.endsWith("/ultima-lectura")) return json(response, 200, lastReading);
+
     const chunks: Buffer[] = [];
     request.on("data", (chunk: Buffer) => chunks.push(chunk));
     request.on("end", () => {
       const body: unknown = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+      lastReading = {
+        model: (body as { model?: unknown }).model ?? null,
+        keyHint: (request.headers.authorization ?? "").slice(-4),
+      };
       // Se miran los archivos de ejemplo en cada petición: así valen aunque se hayan vuelto a generar.
       const readings = readingsByFile();
       const reading = attachedFiles(body)

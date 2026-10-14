@@ -3,6 +3,9 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { SAMPLE_VALID_KEY } from "../scripts/sample-ai-models";
+import { FAKE_AI_URL } from "./ports";
+
 /**
  * EL RECORRIDO DE LA FASE 1, tal como lo dice «se comprueba» en docs/spec.md, hecho como lo haría el asesor.
  * Parte de los datos de ejemplo recién cargados. Las reglas una a una están probadas sin navegador.
@@ -122,4 +125,36 @@ test("cambia el IVA en ajustes: un estudio nuevo lo usa y el antiguo no cambia",
   await page.getByRole("link", { name: "Estudios" }).first().click();
   await page.getByRole("link", { name: "Carmen Ibáñez Roca" }).click();
   await expect(page.getByRole("row", { name: /^IVA/ })).toContainText("× 21 %");
+});
+
+test("pone su clave de OpenRouter y elige el modelo en Ajustes, y la siguiente lectura los usa", async () => {
+  await page.getByRole("link", { name: "Ajustes" }).click();
+
+  // Una clave que OpenRouter no reconoce no se guarda.
+  await page.getByLabel("Clave de OpenRouter").fill("sk-or-v1-mal-copiada");
+  await page.getByRole("button", { name: "Guardar la clave" }).click();
+  await expect(page.getByText("OpenRouter dice que esta clave no vale")).toBeVisible();
+
+  // Una buena sí, y después solo se ven sus cuatro últimos caracteres.
+  await page.getByLabel("Clave de OpenRouter").fill(SAMPLE_VALID_KEY);
+  await page.getByRole("button", { name: "Guardar la clave" }).click();
+  await expect(page.getByText("termina en …a1b2")).toBeVisible();
+  expect(await page.content()).not.toContain(SAMPLE_VALID_KEY);
+
+  // El modelo se busca por su nombre, cada uno con su precio, y solo salen los que sirven.
+  const modelField = page.getByLabel("Modelo de IA");
+  await modelField.fill("o");
+  await expect(page.getByRole("option")).toHaveCount(3);
+  await modelField.fill("gemini");
+  const gemini = page.getByRole("option", { name: /Google: Gemini Prueba Flash/ });
+  await expect(gemini).toContainText("Entrada 0,05 $ · Salida 0,20 $ por millón de tokens");
+  await gemini.click();
+  await expect(page.getByText("Modelo guardado: Google: Gemini Prueba Flash.")).toBeVisible();
+
+  // La siguiente lectura se pide con esa clave y ese modelo.
+  await page.getByRole("link", { name: "Nuevo estudio" }).first().click();
+  await upload(INVOICE_UPLOAD, "factura-1-hogar.pdf");
+  await expect(page.getByRole("heading", { name: "Marta Soler Vidal" })).toBeVisible({ timeout: 60_000 });
+  const lastReading: unknown = await (await fetch(`${FAKE_AI_URL}/ultima-lectura`)).json();
+  expect(lastReading).toEqual({ model: "google/gemini-prueba-flash", keyHint: "a1b2" });
 });

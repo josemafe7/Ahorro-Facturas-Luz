@@ -154,6 +154,16 @@ La fórmula completa, con sus fuentes oficiales y un ejemplo hecho a mano, está
 - (A3) El asesor puede cambiar su marca: nombre comercial, logo, color y datos de contacto. Es la que sale en
   el PDF.
 - (A4) El logo es una imagen PNG o JPG de hasta 2 MB. Cualquier otro archivo se rechaza.
+- (A5) El asesor puede poner su clave de OpenRouter en Ajustes, cambiarla y quitarla. Antes de guardarla, la
+  app la comprueba con OpenRouter: si no vale, no la guarda y lo dice. Se comprueban como mucho 10 claves
+  por hora y asesor. Una vez guardada, la clave no se vuelve a enseñar nunca: la app solo dice que está
+  puesta y sus cuatro últimos caracteres.
+- (A6) El asesor elige el modelo de IA en un desplegable con buscador. Cada modelo enseña su nombre y su
+  precio de entrada y de salida por millón de tokens. Solo aparecen los que pueden leer PDF y fotos y
+  devolver los datos con un formato fijo, y solo se puede guardar uno de la lista. Si no elige ninguno, se
+  usa Claude Haiku 5.5.
+- (A7) Las lecturas con IA de cada asesor usan su clave y su modelo. Si no ha puesto clave, se usa la de la
+  instalación (`.env.local`), si la hay; si no hay ninguna, la app lo dice y deja seguir a mano (regla F11).
 
 ### Marca y sector
 
@@ -195,8 +205,11 @@ Lo que no aparece aquí no está permitido.
   o parte de la cuenta bancaria: se guarda en privado y esos datos no se extraen.
 - El catálogo de tarifas y los ajustes de impuestos. No son datos personales.
 - Cuántas lecturas de IA ha pedido cada asesor, para aplicar el límite.
-- Para leerla, la factura entera se envía al modelo de IA a través de OpenRouter. Ningún otro dato sale de la
-  app.
+- La clave de OpenRouter del asesor, si la pone en la app: se guarda cifrada y no se vuelve a enseñar. Y el
+  modelo de IA que ha elegido.
+- Para leerla, la factura entera se envía al modelo de IA a través de OpenRouter. Además, la app comprueba en
+  OpenRouter la clave que pone el asesor y le pide la lista de modelos con sus precios. Ningún otro dato sale
+  de la app.
 
 ## Qué queda fuera
 
@@ -226,7 +239,8 @@ la app ya terminada va como fase nueva.
   - [x] Tramo 5 · Comparativa, estudio y PDF: la comparación con el catálogo y sus avisos, el PDF con la marca del asesor, la lista con sus estados, el borrado y los estudios de ejemplo (C8 a C12, P1 a P5, L1 a L5, T6, A3, A4, D1).
   - [x] Tramo 6 · Tarifario y cierre: las tarifas leídas de un tarifario, el repaso del diseño en todas las pantallas, el recorrido completo con Playwright, `README.md` y `docs/architecture.md` (T5).
   - [x] Tramo 7 · Arreglos de la revisión: lo que encontró la revisión independiente de la fase. Releer con IA no sustituye datos ya revisados; el límite de intentos de inicio de sesión no se puede saltar y de las cuentas solo quedan abiertas entrar y salir; los números valen con coma o con punto; el límite de lecturas aguanta peticiones a la vez; las dudas y la conversión del precio de la potencia se ven en su campo; sin tarifas activas no se calcula; el PDF dice cuándo se aplica el mínimo del impuesto eléctrico; y todos los textos del sector salen del archivo único (E3, E5, F13, R6, F8, F12, R4, C5, C10, M1).
-  - [ ] Para cerrar la fase: la lectura real con la IA de los documentos de `ejemplos/` (`pnpm ai:check`), que necesita `OPENROUTER_API_KEY` en `.env.local`. Con ella pasada, se marca la fase y se hace el commit de cierre. Quedan además por decidir dos apuntes de estilo de la revisión: `DESIGN.md` dice «una acción principal por pantalla» y el menú lleva «Nuevo estudio» en todas (y Ajustes, dos botones de guardar); y el tamaño de letra de 13 px está escrito en cada pantalla en vez de una vez en el tema.
+  - [x] Tramo 8 · Clave y modelo de IA: el asesor pone su clave de OpenRouter en Ajustes, donde se guarda cifrada, y elige el modelo en un desplegable con buscador que enseña sus precios (A5 a A7).
+  - [ ] Para cerrar la fase: la lectura real con la IA de los documentos de `ejemplos/` (`pnpm ai:check`), que necesita la clave de OpenRouter, puesta en Ajustes o en `.env.local`. Con ella pasada, se marca la fase y se hace el commit de cierre. Quedan además por decidir dos apuntes de estilo de la revisión: `DESIGN.md` dice «una acción principal por pantalla» y el menú lleva «Nuevo estudio» en todas (y Ajustes, dos botones de guardar); y el tamaño de letra de 13 px está escrito en cada pantalla en vez de una vez en el tema.
 - [ ] Fase 2 · Captación y 3.0TD: una página pública donde el cliente sube su factura y deja su contacto, que le llega al asesor como oportunidad; y la tarifa de acceso 3.0TD — se comprueba: sin sesión, subo una factura en la página pública y dejo un contacto, y el asesor la ve como oportunidad y la convierte en estudio; y subo una factura 3.0TD de ejemplo y obtengo su estudio.
 - [ ] Fase 3 · Equipos: varios asesores en una misma cuenta — se comprueba: dos asesores de la misma cuenta ven los mismos estudios y el mismo catálogo, y uno de otra cuenta no ve nada de ellos.
 

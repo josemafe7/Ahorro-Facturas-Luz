@@ -2,12 +2,12 @@ import { randomBytes } from "node:crypto";
 
 import { defineConfig, devices } from "@playwright/test";
 
+import { APP_PORT, FAKE_AI_PORT, FAKE_AI_URL } from "./e2e/ports";
+
 /**
  * Las pruebas con navegador recorren la app compilada como en producción, con su propia base de datos y con
  * la IA simulada (docs/testing.md). Usan puertos propios para no chocar con la app en desarrollo.
  */
-const APP_PORT = 3417;
-const FAKE_AI_PORT = 4417;
 const baseURL = `http://localhost:${APP_PORT}`;
 
 const appEnv = {
@@ -18,7 +18,7 @@ const appEnv = {
   BETTER_AUTH_SECRET: randomBytes(32).toString("base64"),
   // La app se apunta a la IA simulada: no hay ningún modo de prueba dentro de ella.
   OPENROUTER_API_KEY: "simulada",
-  OPENROUTER_BASE_URL: `http://127.0.0.1:${FAKE_AI_PORT}`,
+  OPENROUTER_BASE_URL: FAKE_AI_URL,
 };
 
 export default defineConfig({
@@ -32,7 +32,7 @@ export default defineConfig({
   webServer: [
     {
       command: "pnpm exec tsx e2e/fake-openrouter.ts",
-      url: `http://127.0.0.1:${FAKE_AI_PORT}`,
+      url: `${FAKE_AI_URL}/models`,
       env: { FAKE_OPENROUTER_PORT: String(FAKE_AI_PORT) },
       reuseExistingServer: false,
     },

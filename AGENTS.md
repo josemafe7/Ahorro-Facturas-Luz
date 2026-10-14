@@ -32,6 +32,8 @@ cuál y propón otra forma.
 - Claves, tokens, contraseñas y claves privadas se guardan solo en `.env.local`, que nunca se sube a Git, y
   en producción en las variables de entorno del sitio donde se publique (en Dokploy, en las de la
   aplicación). Nunca en el código, en `docs/` ni en los logs. Sus nombres, sin valores, en `.env.example`.
+  La única excepción es la clave de un servicio que el usuario escribe en la propia app: se guarda cifrada
+  en la base de datos, con una llave que sale de `.env.local`, y nunca vuelve al navegador ni a los logs.
 - Una clave secreta nunca lleva el prefijo `NEXT_PUBLIC_`.
 - No leas ni muestres los archivos `.env`, salvo `.env.example`. Si hace falta una clave nueva, dime su
   nombre y dónde se consigue: la pongo yo o te la paso por el chat.

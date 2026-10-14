@@ -17,7 +17,8 @@ type TextFieldProps = {
   placeholder?: string;
   /** Varias líneas, para notas. */
   multiline?: boolean;
-  type?: "text" | "date" | "email" | "tel" | "url";
+  /** `password` oculta lo que se escribe, como una clave pegada delante de otras personas. */
+  type?: "text" | "date" | "email" | "tel" | "url" | "password";
 };
 
 export function TextField({ name, label, value, help, form, placeholder, multiline, type = "text" }: TextFieldProps) {

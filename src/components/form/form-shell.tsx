@@ -17,6 +17,7 @@ export function FormShell({
   submitLabel,
   pendingLabel = "Guardando…",
   cancelHref,
+  onCancel,
   doubts,
   scope,
   successMessage,
@@ -27,6 +28,8 @@ export function FormShell({
   submitLabel: string;
   pendingLabel?: string;
   cancelHref?: string;
+  /** Cancelar sin cambiar de pantalla, cuando el formulario se abre dentro de otra. */
+  onCancel?: () => void;
   /** Si hay varios formularios iguales en la pantalla, lo que distingue los campos de este. */
   scope?: string;
   /** Si el formulario se queda en la misma pantalla al guardar, el aviso breve que lo confirma. */
@@ -60,6 +63,11 @@ export function FormShell({
           <Link href={cancelHref} className={buttonVariants({ variant: "outline" })}>
             Cancelar
           </Link>
+        )}
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
+            Cancelar
+          </Button>
         )}
       </div>
     </form>

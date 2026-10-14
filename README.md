@@ -28,9 +28,11 @@ pnpm dev
    `http://localhost:3000`.
 
 Para que la IA lea las facturas hace falta una clave de [OpenRouter](https://openrouter.ai/keys) con algo de
-saldo: leer una factura cuesta menos de un céntimo. Se pone en `.env.local`, en la línea
-`OPENROUTER_API_KEY=`, y se reinicia `pnpm dev`. Sin clave la app funciona igual, pero los datos de cada
-factura se rellenan a mano.
+saldo, mejor con un límite de gasto: con el modelo por defecto, leer una factura cuesta menos de un céntimo.
+Se pone en la app, en «Ajustes», donde también se elige el modelo en un desplegable que enseña lo que cuesta
+cada uno. Se guarda cifrada y no se vuelve a enseñar. También se puede poner para toda la instalación en
+`.env.local`, en la línea `OPENROUTER_API_KEY=`, reiniciando después `pnpm dev`. Sin clave la app funciona
+igual, pero los datos de cada factura se rellenan a mano.
 
 ## Cómo probarla
 
@@ -65,7 +67,7 @@ comercializadoras. Cualquier parecido con algo real es casualidad.
 - El nombre, el logo, los colores y cómo se llaman las cosas del sector (la factura, la comercializadora,
   la tarifa y el estudio): `src/config/app.ts`. Es el único sitio: una prueba comprueba que ninguna pantalla,
   ni el PDF, los escribe por su cuenta.
-- El modelo de IA y sus límites: `src/config/ai.ts`.
+- El modelo de IA por defecto y sus límites: `src/config/ai.ts`. Cada asesor puede elegir otro en Ajustes.
 - Lo que la app sabe de la luz (qué se lee de una factura, cómo se comprueba y cómo se calcula):
   `src/sectors/electricity/`. Para otro sector se escribe otro módulo al lado; el resto no se toca. Está
   explicado en `docs/architecture.md`.

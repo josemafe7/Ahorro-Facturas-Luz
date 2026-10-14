@@ -28,6 +28,7 @@ model User {
   files         StoredFile[]
   studies       Study[]
   aiReadings    AiReading[]
+  aiSettings    AiSettings?
   brand         AdvisorBrand?
 
   @@map("user")
@@ -175,6 +176,19 @@ model AiReading {
 
   @@index([userId, createdAt])
   @@map("ai_reading")
+}
+
+/// La IA de un asesor: su clave de OpenRouter y el modelo que ha elegido (reglas A5 a A7).
+model AiSettings {
+  userId          String   @id
+  /// La clave, cifrada (src/lib/secrets.ts). Nunca se guarda tal cual.
+  encryptedApiKey String?
+  /// El identificador del modelo en OpenRouter. Sin él, el de src/config/ai.ts.
+  model           String?
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_settings")
 }
 
 /// La marca del asesor, que es la que sale en el PDF del estudio.

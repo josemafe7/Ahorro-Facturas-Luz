@@ -12,6 +12,8 @@ const numberFormat = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 8, u
 
 const dateFormat = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short", year: "numeric" });
 
+const usdFormat = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 3 });
+
 /** `9365` → `93,65 €` */
 export function formatCents(cents: number): string {
   return `${moneyFormat.format(cents / 100)} €`;
@@ -25,6 +27,11 @@ export function formatAmount(euros: number): string {
 /** Una cantidad o un precio, con los decimales que tenga: `0.123288` → `0,123288` */
 export function formatNumber(value: number): string {
   return numberFormat.format(value);
+}
+
+/** Un precio en dólares, como los de OpenRouter: `0.1` → `0,10 $`; `0.025` → `0,025 $` */
+export function formatUsd(dollars: number): string {
+  return `${usdFormat.format(dollars)} $`;
 }
 
 /** `2026-10-09` → `9 oct 2026` */

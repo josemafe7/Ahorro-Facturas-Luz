@@ -5,10 +5,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { appConfig } from "@/config/app";
+import { getReadingModel } from "@/data/ai-settings";
 import { DOCUMENT_UPLOAD } from "@/data/files";
 import { readOffersDocument, type OffersImport } from "@/data/offer-import";
 import { createOffer, deleteOffer, setOfferActive, updateOffer } from "@/data/offers";
-import { getReadingModel } from "@/lib/ai";
 import { failed, succeeded, type FormState } from "@/lib/form-state";
 import { idSchema } from "@/lib/ids";
 import type { Result } from "@/lib/result";
@@ -77,7 +77,7 @@ export async function importOffersAction(form: FormData): Promise<Result<OffersI
     return { ok: false, message: `El archivo pasa de ${DOCUMENT_UPLOAD.maxMb} MB. Súbelo más pequeño.` };
   }
 
-  return readOffersDocument(user.id, new Uint8Array(await file.arrayBuffer()), getReadingModel());
+  return readOffersDocument(user.id, new Uint8Array(await file.arrayBuffer()), await getReadingModel(user.id));
 }
 
 /** Guarda una de las tarifas propuestas, ya revisada, y se queda en la misma pantalla. */

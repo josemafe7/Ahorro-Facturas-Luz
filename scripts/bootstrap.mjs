@@ -21,8 +21,8 @@ if (!existsSync(ENV_FILE)) {
     "# Claves de este ordenador. Este archivo nunca se sube a Git.",
     `BETTER_AUTH_SECRET=${randomBytes(32).toString("base64")}`,
     "",
-    "# La clave de OpenRouter, que paga las lecturas de la IA: https://openrouter.ai/keys",
-    "# Sin ella la app funciona, pero los datos de cada factura se rellenan a mano.",
+    "# Opcional: la clave de OpenRouter de toda la instalación (https://openrouter.ai/keys). Lo normal es",
+    "# ponerla en la app, en Ajustes. Sin ninguna, los datos de cada documento se rellenan a mano.",
     "# OPENROUTER_API_KEY=",
     "",
   ];

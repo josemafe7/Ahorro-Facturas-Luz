@@ -88,7 +88,7 @@ export const appConfig = {
         importEmpty: "La IA no ha encontrado en ese documento ninguna tarifa que se pueda cargar.",
         importFailed: "La IA no ha podido leer el documento. Vuelve a intentarlo o añade las tarifas a mano.",
         importLimit: "Has llegado al límite de {limite} lecturas con IA por hora. Inténtalo más tarde o añade las tarifas a mano.",
-        importNotConfigured: "La lectura con IA no está configurada: falta la clave de OpenRouter en el servidor. Añade las tarifas a mano.",
+        importNotConfigured: "La lectura con IA no está configurada: falta la clave de OpenRouter, que se pone en Ajustes. Añade las tarifas a mano o ponla y vuelve a subirlo.",
         /** Cada oferta que propone la IA, cuando todavía no tiene nombre, y lo que se le dice al asesor. */
         proposalTitle: "Tarifa {numero}",
         proposalHint: "Propuesta {numero} de {total}. Compárala con el tarifario antes de guardarla.",
