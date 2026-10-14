@@ -54,7 +54,7 @@ function report(name: string, seconds: number, usage: { inputTokens?: number; ou
   const cost = usage.costUsd === undefined ? "coste no informado" : `${(usage.costUsd * 100).toFixed(3)} céntimos de dólar`;
   console.log(`\n${issues.length === 0 ? "✓" : "✗"} ${name} · ${seconds.toFixed(1)} s · ${usage.inputTokens} + ${usage.outputTokens} tokens · ${cost}`);
   issues.forEach((issue) => console.log(`    ${issue}`));
-  doubts.forEach((doubt) => console.log(`    duda de la IA → ${doubt}`));
+  doubts.forEach((doubt) => console.log(`    marcado para revisar → ${doubt}`));
 }
 
 console.log(`Modelo: ${credentials.model}`);
@@ -69,7 +69,7 @@ for (const sample of SAMPLE_INVOICES) {
     continue;
   }
   // Se compara con lo impreso, sin la duda que la IA simulada añade a la foto.
-  const expected = interpretInvoiceReading({ ...sampleReading(sample), energyKwhP2: { value: sample.data.energyKwh.p2, doubt: null } }).draft;
+  const expected = interpretInvoiceReading({ ...sampleReading(sample), doubts: [] }).draft;
   const issues = outcome.value.recognized ? differences(expected, outcome.value.draft) : ["no la ha reconocido como factura de luz"];
   report(file, (Date.now() - started) / 1000, outcome.usage, issues, outcome.value.doubts.map(({ field, reason }) => `${field}: ${reason}`));
 }

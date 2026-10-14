@@ -93,8 +93,9 @@ describe("Leer la factura con IA", () => {
   it("F5 · cada dato llega como seguro o como dudoso, y los que la IA no encuentra llegan vacíos", async () => {
     const advisor = await createTestAdvisor();
     const reading = invoiceReading({
-      energyKwhP2: { value: 84, doubt: "La cifra está borrosa: puede ser 84 u 94." },
-      supplyAddress: { value: null, doubt: null },
+      energyKwhP2: 84,
+      supplyAddress: "",
+      doubts: [{ field: "energyKwhP2", reason: "La cifra está borrosa: puede ser 84 u 94." }],
     });
 
     const study = await getStudy(advisor.id, await read(advisor.id, reading));
@@ -160,7 +161,7 @@ describe("Leer la factura con IA", () => {
     await saveStudyDocument(advisor.id, id, reviewed);
 
     // Volver a leer ya no se puede: ni se llama a la IA ni se tocan los datos.
-    const model = modelAnswering(invoiceReading({ energyKwhP1: { value: 9999, doubt: "No se lee bien." } }));
+    const model = modelAnswering(invoiceReading({ energyKwhP1: 9999, doubts: [{ field: "energyKwhP1", reason: "No se lee bien." }] }));
     expect((await readStudy(advisor.id, id, model)).ok).toBe(false);
     expect(model.doGenerateCalls).toHaveLength(0);
     expect(await getStudy(advisor.id, id)).toMatchObject({ reviewed: true, doubts: {}, draft: { energyKwh: { p1: 96 } } });
@@ -171,7 +172,7 @@ describe("Revisar los datos", () => {
   it("R1 · el asesor ve todos los datos leídos con sus dudas, también las que encuentra la app, y puede corregirlos", async () => {
     const advisor = await createTestAdvisor();
     // La IA lee mal una letra del CUPS y no avisa: lo detecta la app (regla F6).
-    const id = await read(advisor.id, invoiceReading({ cups: { value: "ES0999100000000015JX", doubt: null } }));
+    const id = await read(advisor.id, invoiceReading({ cups: "ES0999100000000015JX" }));
 
     expect((await getStudy(advisor.id, id))?.doubts).toEqual({
       cups: "Las letras de control no cuadran con las cifras: revisa el CUPS.",
@@ -228,7 +229,7 @@ describe("Privacidad y permisos", () => {
     const id = await read(owner.id);
 
     expect(await getStudy(other.id, id)).toBeNull();
-    expect((await readStudy(other.id, id, modelAnswering(invoiceReading({ holder: { value: "Intruso", doubt: null } })))).ok).toBe(false);
+    expect((await readStudy(other.id, id, modelAnswering(invoiceReading({ holder: "Intruso" })))).ok).toBe(false);
     expect((await saveStudyDocument(other.id, id, { ...reviewed, holder: "Intruso" })).ok).toBe(false);
 
     expect((await getStudy(owner.id, id))?.draft.holder).toBe("Marta Soler Vidal");

@@ -69,7 +69,7 @@ describe("Calcular y comparar", () => {
     await offer(advisor.id, cheap);
     const created = await createStudy(advisor.id, PDF_BYTES);
     const id = created.ok ? created.value.id : "";
-    await readStudy(advisor.id, id, modelAnswering(invoiceReading({ invoiceTotal: { value: 1, doubt: null } })));
+    await readStudy(advisor.id, id, modelAnswering(invoiceReading({ invoiceTotal: 1 })));
 
     // El asesor da por buenos los datos tal como los propuso la IA, total incluido.
     await saveStudyDocument(advisor.id, id, (await study(advisor.id, id)).draft);

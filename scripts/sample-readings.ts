@@ -27,8 +27,6 @@ export function invoiceLines(sample: SampleInvoice): { lines: BreakdownLine[]; t
   return { lines, totalCents: base + vat };
 }
 
-const sure = <T>(value: T) => ({ value, doubt: null });
-
 /** Lo que leería una IA de una factura de ejemplo. De la que va como foto, con un dato dudoso. */
 export function sampleReading(sample: SampleInvoice): InvoiceReading {
   const { data } = sample;
@@ -37,56 +35,54 @@ export function sampleReading(sample: SampleInvoice): InvoiceReading {
 
   return {
     isElectricityInvoice: true,
-    holder: sure(data.holder),
-    supplyAddress: sure(data.supplyAddress),
-    cups: sure(data.cups),
-    currentProvider: sure(data.currentProvider ?? sample.provider.name),
-    accessTariff: sure(data.accessTariff),
-    periodStart: sure(data.periodStart),
-    periodEnd: sure(data.periodEnd),
-    days: sure(data.days),
-    powerKwP1: sure(data.powerKw.p1),
-    powerKwP2: sure(data.powerKw.p2),
-    energyKwhP1: sure(data.energyKwh.p1),
-    energyKwhP2: sample.asPhoto
-      ? { value: data.energyKwh.p2, doubt: "La cifra se ve borrosa en la foto: puede ser 160 o 180." }
-      : sure(data.energyKwh.p2),
-    energyKwhP3: sure(data.energyKwh.p3),
-    powerPriceP1: sure(data.powerPrice.p1.amount),
-    powerPriceP2: sure(data.powerPrice.p2.amount),
-    powerPriceUnit: sure(data.powerPrice.p1.unit),
-    energyPriceP1: sure(data.energyPrice.p1),
-    energyPriceP2: sure(data.energyPrice.p2),
-    energyPriceP3: sure(data.energyPrice.p3),
-    meterRental: sure(meterRental / CENTS_PER_EURO),
-    invoiceTotal: sure(totalCents / CENTS_PER_EURO),
+    holder: data.holder,
+    supplyAddress: data.supplyAddress,
+    cups: data.cups,
+    currentProvider: data.currentProvider ?? sample.provider.name,
+    accessTariff: data.accessTariff,
+    periodStart: data.periodStart,
+    periodEnd: data.periodEnd,
+    days: data.days,
+    powerKwP1: data.powerKw.p1,
+    powerKwP2: data.powerKw.p2,
+    energyKwhP1: data.energyKwh.p1,
+    energyKwhP2: data.energyKwh.p2,
+    energyKwhP3: data.energyKwh.p3,
+    powerPriceP1: data.powerPrice.p1.amount,
+    powerPriceP2: data.powerPrice.p2.amount,
+    powerPriceUnit: data.powerPrice.p1.unit,
+    energyPriceP1: data.energyPrice.p1,
+    energyPriceP2: data.energyPrice.p2,
+    energyPriceP3: data.energyPrice.p3,
+    meterRental: meterRental / CENTS_PER_EURO,
+    invoiceTotal: totalCents / CENTS_PER_EURO,
+    doubts: sample.asPhoto ? [{ field: "energyKwhP2", reason: "La cifra se ve borrosa en la foto: puede ser 160 o 180." }] : [],
   };
 }
 
-const none = { value: null, doubt: null };
-
-/** Lo que respondería una IA ante un documento que no es una factura de luz. */
+/** Lo que respondería una IA ante un documento que no es una factura de luz: todo vacío. */
 export const NOT_AN_INVOICE: InvoiceReading = {
   isElectricityInvoice: false,
-  holder: none,
-  supplyAddress: none,
-  cups: none,
-  currentProvider: none,
-  accessTariff: none,
-  periodStart: none,
-  periodEnd: none,
-  days: none,
-  powerKwP1: none,
-  powerKwP2: none,
-  energyKwhP1: none,
-  energyKwhP2: none,
-  energyKwhP3: none,
-  powerPriceP1: none,
-  powerPriceP2: none,
-  powerPriceUnit: none,
-  energyPriceP1: none,
-  energyPriceP2: none,
-  energyPriceP3: none,
-  meterRental: none,
-  invoiceTotal: none,
+  holder: "",
+  supplyAddress: "",
+  cups: "",
+  currentProvider: "",
+  accessTariff: "",
+  periodStart: "",
+  periodEnd: "",
+  days: -1,
+  powerKwP1: -1,
+  powerKwP2: -1,
+  energyKwhP1: -1,
+  energyKwhP2: -1,
+  energyKwhP3: -1,
+  powerPriceP1: -1,
+  powerPriceP2: -1,
+  powerPriceUnit: "unknown",
+  energyPriceP1: -1,
+  energyPriceP2: -1,
+  energyPriceP3: -1,
+  meterRental: -1,
+  invoiceTotal: -1,
+  doubts: [],
 };

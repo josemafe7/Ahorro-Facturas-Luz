@@ -10,32 +10,33 @@ import { createTestAdvisor } from "@/test/users";
 import { readOffersDocument } from "./offer-import";
 import { createOffer, listOffers } from "./offers";
 
-const sure = <T>(value: T) => ({ value, doubt: null });
-
 /** Lo que leería la IA de un tarifario con dos tarifas 2.0TD de precio fijo. */
 const reading: TariffsReading = {
   tariffs: [
     {
-      provider: sure("Cierzo Eléctrica"),
-      name: sure("Hogar 2027"),
-      powerPriceP1: sure(34.5),
-      powerPriceP2: sure(11),
-      powerPriceUnit: sure("year"),
-      energyPriceP1: sure(0.121),
-      energyPriceP2: sure(0.121),
-      energyPriceP3: sure(0.121),
+      provider: "Cierzo Eléctrica",
+      name: "Hogar 2027",
+      powerPriceP1: 34.5,
+      powerPriceP2: 11,
+      powerPriceUnit: "year",
+      energyPriceP1: 0.121,
+      energyPriceP2: 0.121,
+      energyPriceP3: 0.121,
       notes: "Permanencia de 12 meses.",
+      doubts: [],
     },
     {
-      provider: sure("Cierzo Eléctrica"),
-      name: sure("Fin de Semana"),
-      powerPriceP1: sure(34.5),
-      powerPriceP2: sure(11),
-      powerPriceUnit: sure("year"),
-      energyPriceP1: sure(0.182),
-      energyPriceP2: { value: 0.131, doubt: "La celda está partida entre dos líneas." },
-      energyPriceP3: { value: null, doubt: null },
-      notes: null,
+      provider: "Cierzo Eléctrica",
+      name: "Fin de Semana",
+      powerPriceP1: 34.5,
+      powerPriceP2: 11,
+      powerPriceUnit: "year",
+      energyPriceP1: 0.182,
+      energyPriceP2: 0.131,
+      // No lo encuentra.
+      energyPriceP3: -1,
+      notes: "",
+      doubts: [{ field: "energyPriceP2", reason: "La celda está partida entre dos líneas." }],
     },
   ],
 };

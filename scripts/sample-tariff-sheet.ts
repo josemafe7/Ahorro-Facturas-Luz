@@ -44,32 +44,32 @@ export const SAMPLE_TARIFF_SHEET = {
   footnote: "(*) En la tarifa Fin de Semana, el precio de la potencia en valle es promocional durante los 6 primeros meses. Después, 14,00 €/kW año.",
 } as const;
 
-const sure = <T>(value: T) => ({ value, doubt: null });
-
 /** Lo que una IA debería leer del tarifario de ejemplo: solo las dos tarifas 2.0TD de precio fijo. */
 export const SAMPLE_TARIFF_SHEET_READING: TariffsReading = {
   tariffs: [
     {
-      provider: sure("Cierzo Eléctrica"),
-      name: sure("Hogar 2027"),
-      powerPriceP1: sure(34.5),
-      powerPriceP2: sure(11),
-      powerPriceUnit: sure("year"),
-      energyPriceP1: sure(0.121),
-      energyPriceP2: sure(0.121),
-      energyPriceP3: sure(0.121),
+      provider: "Cierzo Eléctrica",
+      name: "Hogar 2027",
+      powerPriceP1: 34.5,
+      powerPriceP2: 11,
+      powerPriceUnit: "year",
+      energyPriceP1: 0.121,
+      energyPriceP2: 0.121,
+      energyPriceP3: 0.121,
       notes: "Permanencia de 12 meses.",
+      doubts: [],
     },
     {
-      provider: sure("Cierzo Eléctrica"),
-      name: sure("Fin de Semana"),
-      powerPriceP1: sure(34.5),
-      powerPriceP2: { value: 11, doubt: "Hay dos precios: 11,00 € es promocional durante 6 meses y después son 14,00 €." },
-      powerPriceUnit: sure("year"),
-      energyPriceP1: sure(0.182),
-      energyPriceP2: sure(0.131),
-      energyPriceP3: sure(0.079),
+      provider: "Cierzo Eléctrica",
+      name: "Fin de Semana",
+      powerPriceP1: 34.5,
+      powerPriceP2: 11,
+      powerPriceUnit: "year",
+      energyPriceP1: 0.182,
+      energyPriceP2: 0.131,
+      energyPriceP3: 0.079,
       notes: "Sin permanencia.",
+      doubts: [{ field: "powerPriceP2", reason: "Hay dos precios: 11,00 € es promocional durante 6 meses y después son 14,00 €." }],
     },
   ],
 };

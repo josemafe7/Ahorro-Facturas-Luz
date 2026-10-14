@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { Doubt } from "@/engine/types";
 import { invoiceReading } from "@/test/ai";
 
-import { interpretInvoiceReading, type InvoiceReading } from "../reading";
+import { INVOICE_READ_KEYS, interpretInvoiceReading, type InvoiceReading } from "../reading";
 import { InvoiceFields } from "./invoice-fields";
 import { TariffFields } from "./tariff-fields";
 
@@ -20,21 +20,18 @@ function invoiceForm(reading: InvoiceReading) {
 describe("Lo que se ve al revisar", () => {
   it("R1 · cada dato dudoso se ve en su campo con el motivo: los que señala la IA y los que detecta la app", () => {
     // La IA duda de todos y cada uno de los datos que lee.
-    const everything = Object.fromEntries(
-      Object.entries(invoiceReading()).map(([key, read]) => [key, typeof read === "boolean" ? read : { ...read, doubt: `Duda de ${key}.` }]),
-    ) as InvoiceReading;
-    const fromAi = invoiceForm(everything);
+    const fromAi = invoiceForm(invoiceReading({ doubts: INVOICE_READ_KEYS.map((field) => ({ field, reason: `Duda de ${field}.` })) }));
     expect(fromAi.doubts).toHaveLength(21);
     for (const { reason } of fromAi.doubts) expect(fromAi.html).toContain(reason);
 
     // La IA no avisa de nada, pero el CUPS, los días y dos precios no cuadran: lo detecta la app (F6 a F8).
     const fromChecks = invoiceForm(
       invoiceReading({
-        cups: { value: "ES0999100000000015JX", doubt: null },
-        days: { value: 61, doubt: null },
-        energyPriceP2: { value: 0, doubt: null },
-        powerPriceP1: { value: 400, doubt: null },
-        powerPriceUnit: { value: "year", doubt: null },
+        cups: "ES0999100000000015JX",
+        days: 61,
+        energyPriceP2: 0,
+        powerPriceP1: 400,
+        powerPriceUnit: "year",
       }),
     );
     expect(fromChecks.doubts.map(({ field }) => field)).toEqual(["cups", "days", "energyPrice.p2", "powerPrice.p1.amount"]);

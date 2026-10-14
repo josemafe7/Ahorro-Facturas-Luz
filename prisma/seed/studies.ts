@@ -73,7 +73,10 @@ export async function seedStudies(userId: string): Promise<void> {
       check(await calculateStudy(userId, id));
       check(await setStudyStatus(userId, id, status));
     } else {
-      const doubtful = { ...reading, energyKwhP3: { value: sample.data.energyKwh.p3, doubt: "No está claro si esta cifra es el consumo en valle o el total." } };
+      const doubtful = {
+        ...reading,
+        doubts: [{ field: "energyKwhP3" as const, reason: "No está claro si esta cifra es el consumo en valle o el total." }],
+      };
       check(await saveStudyReading(userId, id, interpretInvoiceReading(doubtful)));
     }
 

@@ -45,7 +45,11 @@ El recorrido de un estudio, de principio a fin:
    su tamaño, lo guarda en la carpeta privada con un nombre aleatorio y crea el estudio en borrador.
 2. **Leer.** El servidor comprueba que al asesor le quedan lecturas en esta hora y envía la factura al
    modelo con las instrucciones y el formato que define el sector. La IA no tiene herramientas: solo devuelve
-   datos. La respuesta se valida contra ese formato; si no lo cumple, se descarta.
+   datos. La respuesta se valida contra ese formato; si no lo cumple, se descarta. El formato es plano y
+   pequeño: cada dato es un valor sencillo (vacío, o -1 si es un número, cuando no aparece) y las dudas van
+   en una lista aparte. Así lo aceptan todos los modelos de la lista: Claude rechaza más de 16 campos que
+   admitan «nulo» o alternativas y los formatos demasiado grandes, y lo descubrió la primera lectura real.
+   `src/sectors/electricity/ai-format.test.ts` vigila las dos cosas.
 3. **Interpretar.** El sector convierte la respuesta en un borrador de factura y le añade las dudas: las de
    la IA, los datos que no encontró y las que detecta la app por su cuenta, como un CUPS que no cuadra.
 4. **Revisar.** El asesor ve los datos junto a la factura y los corrige. Al pulsar «Calcular», el servidor
