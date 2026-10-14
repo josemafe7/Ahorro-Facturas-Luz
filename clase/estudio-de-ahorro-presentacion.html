@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudio de Ahorro · DominIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!--
+  PLANTILLA BASE · skill presentaciones-interactivas-josema · estilo DominIA
+  Escenario 1920x1080 escalado. Motor de pasos: → / espacio / ← · F pantalla completa · H oculta HUD · 1-9,0 saltan.
+  Contrato: .slide[data-steps] · .rise/.pop + --d · [data-step] · [data-only] · [data-set] · [data-go] · hooks[id] · leaves[id]
+  Referencia de calidad y patrones completos: assets/ejemplo-taller.html (ver references/patrones.md)
+  El logo de DominIA ya va incrustado (img.logo). No lo quites.
+-->
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#06080d;
+  --line:#1b2230;
+  --line2:#273142;
+  --text:#f3f5f9;
+  --muted:#8a94a6;
+  --dim:#566072;
+  --blue:#4b8cf7;
+  --blue2:#2f6fe8;
+  --blue3:#a9c6ff;
+  --green:#34d399;
+  --amber:#f5b64a;
+  --red:#f26d6d;
+  --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ============ STAGE ============ */
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;overflow:hidden;
+  background:
+    radial-gradient(900px 620px at 4% -6%, rgba(109,40,217,.20), transparent 62%),
+    radial-gradient(1100px 700px at 100% 0%, rgba(37,99,235,.07), transparent 60%),
+    linear-gradient(180deg,#080a11,#05070b);
+}
+.topline{position:absolute;left:0;top:0;height:3px;width:100%;background:rgba(148,163,184,.08);z-index:50}
+.topline i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue2),var(--blue3));transition:width .6s var(--ease)}
+.logo{position:absolute;right:62px;top:36px;height:68px;z-index:60;pointer-events:none}
+
+.slide{position:absolute;inset:0;padding:112px 110px 0;opacity:0;pointer-events:none;transform:translateX(40px);filter:blur(6px);
+  transition:opacity .55s var(--ease), transform .7s var(--ease), filter .55s var(--ease)}
+.slide.past{transform:translateX(-40px)}
+.slide.active{opacity:1;pointer-events:auto;transform:none;filter:none}
+.slide.airy{padding-top:150px}   /* baja todo si la diapositiva tiene poco contenido y queda hueco abajo */
+
+.rise{opacity:0}
+.slide.enter .rise{animation:rise .9s var(--ease) both;animation-delay:calc(var(--d,0) * 1s)}
+@keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+.slide.enter .pop{animation:pop .8s var(--ease) both;animation-delay:calc(var(--d,0) * 1s)}
+@keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+
+/* OJO: los [data-step]/[data-only] usan transform para aparecer. No los centres con translate: usa left/margin. */
+[data-step],[data-only]{opacity:0;transform:translateY(16px);transition:opacity .55s var(--ease), transform .65s var(--ease)}
+[data-step].on,[data-only].on{opacity:1;transform:none}
+
+/* ============ CABECERA (centrada, en mayúsculas) ============ */
+.h1{font-weight:900;font-size:84px;letter-spacing:-.025em;line-height:1;text-transform:uppercase;text-align:center}
+.h1 em{font-style:normal;color:var(--blue)}
+.sub{text-align:center;font-size:27px;color:var(--muted);margin-top:22px;font-weight:400}
+.sub b{color:var(--text);font-weight:600}
+
+/* ============ TARJETAS ============ */
+.cards{display:grid;gap:26px}
+.card{position:relative;background:linear-gradient(180deg,#10151e,#0c1118);border:1px solid var(--line);border-radius:18px;padding:46px 32px 40px;
+  text-align:center;display:flex;flex-direction:column;align-items:center;transition:border-color .35s, box-shadow .35s, background .35s, opacity .45s}
+.ico{width:70px;height:70px;border-radius:16px;display:grid;place-items:center;background:rgba(37,99,235,.12);border:1px solid rgba(59,130,246,.30);color:var(--blue);font-size:31px;transition:all .45s var(--ease)}
+.card h3{font-size:25px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-top:30px;line-height:1.25}
+.card p{font-size:21px;color:var(--muted);line-height:1.5;margin-top:16px;max-width:430px}
+.card p b{color:var(--text);font-weight:600}
+.card .who{font-size:15px;font-weight:700;letter-spacing:.22em;color:var(--blue);text-transform:uppercase;margin-top:12px}
+button.card{cursor:pointer}
+button.card:hover{border-color:var(--line2)}
+.card.sel{border-color:rgba(75,140,247,.65);background:linear-gradient(180deg,#111c31,#0c1321);
+  box-shadow:0 0 0 1px rgba(75,140,247,.22),0 26px 70px -26px rgba(37,99,235,.6)}
+/* Rejillas probadas. El contenido va arriba con padding fijo para que los iconos queden alineados. */
+.c3{grid-template-columns:repeat(3,1fr);margin-top:56px;height:430px}
+.c4{grid-template-columns:repeat(4,1fr);margin-top:56px;height:430px}
+.c3 .card,.c4 .card{justify-content:flex-start;padding-top:84px;padding-bottom:40px}
+.c4 .card{padding-top:92px}
+
+/* ============ BANDA ("la clave", "la pregunta", "el final") ============ */
+.band{position:relative;display:grid;grid-template-columns:250px 1fr auto;align-items:center;gap:34px;border:1px solid var(--line);border-radius:18px;
+  background:linear-gradient(180deg,#0f141c,#0b0f16);padding:30px 40px;min-height:118px;margin-top:30px}
+.band.two{grid-template-columns:250px 1fr}
+.band .k{font-size:16px;font-weight:800;letter-spacing:.24em;color:var(--blue);text-transform:uppercase}
+.band .t{font-size:25px;color:var(--muted);line-height:1.45}
+.band .t b{color:var(--text);font-weight:700}
+.pills{display:flex;align-items:center;gap:14px;color:var(--dim);font-size:20px}
+.pill{display:inline-flex;align-items:center;gap:10px;padding:12px 20px;border-radius:10px;border:1px solid var(--line2);background:#121823;font-size:18px;font-weight:600;color:var(--text);white-space:nowrap}
+.pill.blue{background:rgba(37,99,235,.16);border-color:rgba(75,140,247,.45);color:#d4e3ff}
+.pill .i{font-size:20px;color:var(--blue)}
+
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:700;letter-spacing:.04em;border-radius:999px;padding:7px 14px;border:1px solid var(--line2);color:var(--muted);white-space:nowrap}
+.chip.blue{color:#cfe0ff;border-color:rgba(75,140,247,.5);background:rgba(37,99,235,.14)}
+.chip.green{color:#9ff3cf;border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.10)}
+.chip.amber{color:#ffd79a;border-color:rgba(245,182,74,.45);background:rgba(245,182,74,.10)}
+.chip.red{color:#ffb4b4;border-color:rgba(242,109,109,.45);background:rgba(242,109,109,.10)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor}
+.pulse{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.3}}
+
+/* ============ HUD ============ */
+.hud{position:absolute;left:110px;right:110px;bottom:24px;display:flex;align-items:center;justify-content:space-between;z-index:40;pointer-events:none}
+.hud .brand{font-size:15px;color:var(--dim);letter-spacing:.08em;font-weight:600}
+.hud .brand b{color:var(--blue);font-weight:700}
+.hud .nav{display:flex;align-items:center;gap:14px;pointer-events:auto}
+.hud .dots{display:flex;gap:8px}
+.hud .dots button{width:9px;height:9px;border-radius:50%;background:rgba(148,163,184,.22);transition:all .35s}
+.hud .dots button.on{background:var(--blue);width:26px;border-radius:6px}
+.hud .arrow{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);color:var(--muted);font-size:16px;transition:all .25s}
+.hud .arrow:hover{border-color:var(--line2);color:var(--text)}
+.hud .count{font-size:15px;color:var(--dim);min-width:64px;text-align:right;font-weight:600}
+body.clean .hud{opacity:0}
+body.captura .rise,body.captura .pop{animation:none!important;opacity:1!important}
+body.captura .slide,body.captura [data-step],body.captura [data-only]{transition:none!important}
+
+/* ============ 01 · PORTADA ============ */
+#s-portada{padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:40px}
+.live{display:inline-flex;align-items:center;gap:12px;font-size:17px;font-weight:800;letter-spacing:.26em;color:var(--muted);text-transform:uppercase;
+  border:1px solid var(--line2);border-radius:999px;padding:12px 24px;background:rgba(255,255,255,.02)}
+.live .dot{color:#ef4444}
+.cover-title{font-size:150px;font-weight:900;letter-spacing:-.035em;line-height:.95;text-transform:uppercase;text-align:center;margin-top:40px}
+.cover-title em{font-style:normal;background:linear-gradient(90deg,#4b8cf7,#8fb5ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+#s-portada .sub{font-size:30px;margin-top:30px}
+.agenda{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:60px;max-width:1500px}
+.agenda button{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:12px;padding:14px 22px;font-size:20px;font-weight:600;color:#cfd5e1;
+  background:linear-gradient(180deg,#10151e,#0c1118);transition:all .3s var(--ease)}
+.agenda button:hover{border-color:rgba(75,140,247,.55);color:#fff;transform:translateY(-2px)}
+.agenda button span{font-size:15px;font-weight:800;color:var(--blue)}
+
+/* ============ 03 · FLUJO DE TRES TARJETAS ============ */
+.idea{display:grid;grid-template-columns:1fr 110px 1fr 110px 1fr;align-items:center;margin-top:56px;height:440px}
+.idea .card{height:100%;justify-content:flex-start;padding-top:86px}
+.idea .card .ico{width:84px;height:84px;font-size:38px;border-radius:20px}
+.idea .card h3{font-size:28px}
+.conn{position:relative;height:40px}
+.conn svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.conn .ln{fill:none;stroke:rgba(75,140,247,.8);stroke-width:2.5;stroke-dasharray:7 8;animation:flow 1.2s linear infinite}
+.conn .hd{fill:none;stroke:rgba(75,140,247,.9);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+@keyframes flow{to{stroke-dashoffset:-30}}
+
+/* ============ 04 · PESTAÑAS CON BANDA QUE CAMBIA ============ */
+.rband{position:relative;margin-top:30px;height:150px}
+.rband .band{position:absolute;inset:0;margin:0}
+.rband .pills{flex-wrap:wrap}
+
+/* ============ 05 · FILAS NUMERADAS ============ */
+.why{display:flex;flex-direction:column;gap:18px;margin-top:52px}
+.wrow{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:30px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#10151e,#0c1118);padding:0 40px;height:138px}
+.wrow .no{font-size:52px;font-weight:900;color:var(--blue);letter-spacing:-.02em}
+.wrow .s > b{display:block;font-size:36px;font-weight:800;letter-spacing:-.01em}
+.wrow .s > span{display:block;font-size:21px;color:var(--muted);margin-top:8px}
+.wrow .src{font-size:14px;color:var(--dim);text-align:right;line-height:1.5}
+.num{font-variant-numeric:tabular-nums;font-style:normal}
+
+/* ============ 06 · PIEZAS QUE SE DESBLOQUEAN (cierre) ============ */
+.c4.locks .card .ico{background:rgba(148,163,184,.07);border-color:var(--line2);color:var(--dim)}
+.c4.locks .card h3{color:#9aa3b3}
+.lk{position:absolute;top:22px;right:22px;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#161c27;color:var(--dim);font-size:20px;transition:all .45s var(--ease)}
+.c4.locks .card.unl{border-color:rgba(75,140,247,.65);background:linear-gradient(180deg,#111c31,#0c1321);box-shadow:0 0 0 1px rgba(75,140,247,.22),0 26px 70px -26px rgba(37,99,235,.6)}
+.c4.locks .card.unl .ico{background:rgba(37,99,235,.14);border-color:rgba(75,140,247,.45);color:var(--blue)}
+.c4.locks .card.unl h3{color:var(--text)}
+.c4.locks .card.unl .lk{background:rgba(52,211,153,.14);color:var(--green)}
+
+/* ============ COLORES DE LA APP Y DEL ASESOR (solo en sus piezas) ============ */
+:root{--app:#047857;--brand:#1E3A8A}
+
+/* ============ 01 · PORTADA · LA FACTURA Y EL ESTUDIO ============ */
+.cover-obj{display:flex;align-items:center;gap:30px;margin-top:58px}
+.doc{width:350px;border-radius:14px;padding:22px 26px;text-align:left;box-shadow:0 30px 80px -30px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.08)}
+.doc small{display:block;font-size:13px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+.doc b{display:block;font-size:22px;font-weight:800;margin-top:8px}
+.doc .lines{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.doc .lines i{display:block;height:8px;border-radius:4px;background:#dde2ea}
+.doc .lines i:nth-child(2){width:78%}.doc .lines i:nth-child(3){width:88%}
+.doc .amt{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid #e3e6ec}
+.doc .amt span{font-size:15px;color:#6b7280;font-weight:600}
+.doc .amt em{font-style:normal;font-size:40px;font-weight:900;letter-spacing:-.02em;white-space:nowrap}
+.doc.bill{background:#eef1f5;color:#1f2937}
+.doc.bill small{color:#6b7280}
+.doc.study{background:#f7f8fa;color:#111827;border-top:7px solid var(--brand)}
+.doc.study small{color:var(--brand)}
+.doc.study .amt em{color:var(--app)}
+.cover-arrow{display:flex;flex-direction:column;align-items:center;gap:12px;font-size:14px;font-weight:800;letter-spacing:.22em;color:var(--blue);text-transform:uppercase}
+.cover-arrow .conn{width:130px;height:34px}
+.cover-cap{display:flex;align-items:center;gap:16px;margin-top:28px;font-size:22px;color:var(--muted)}
+.cover-cap b{color:var(--text);font-weight:700}
+
+/* ============ 02 · UN DÍA DE LUCÍA ============ */
+.m-grid{display:grid;grid-template-columns:590px 1fr;gap:30px;margin-top:44px;height:650px}
+.m-left{display:flex;flex-direction:column;gap:18px}
+.stat{display:flex;align-items:center;gap:28px;background:linear-gradient(180deg,#10151e,#0c1118);border:1px solid var(--line);border-radius:18px;padding:0 32px;height:132px}
+.stat .n{font-size:66px;font-weight:900;letter-spacing:-.02em;min-width:96px}
+.stat .l{font-size:21px;color:var(--muted);line-height:1.35}
+.stat .l b{color:var(--text);font-weight:700;display:block;font-size:22px;letter-spacing:.1em;text-transform:uppercase}
+.m-call{border:1px solid rgba(242,109,109,.35);background:linear-gradient(180deg,rgba(242,109,109,.10),rgba(242,109,109,.03));border-radius:18px;padding:24px 30px;font-size:24px;color:var(--muted);line-height:1.45}
+.m-call b{color:var(--text)}
+.m-call{margin-top:auto}
+.m-call .chip{display:flex;width:fit-content;margin-top:12px}
+.noti{position:relative;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,#0e131b,#0a0e14);overflow:hidden;display:flex;flex-direction:column}
+.noti-h{display:flex;align-items:center;justify-content:space-between;padding:22px 28px;border-bottom:1px solid var(--line)}
+.noti-h .t{display:flex;align-items:center;gap:14px;font-size:20px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.noti-h .t .i{font-size:24px;color:var(--blue)}
+.noti-h .clk{font-size:24px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+.noti-h .cnt{display:flex;align-items:center;gap:12px;font-size:18px;color:var(--muted)}
+.noti-h .cnt b{background:#ef4444;color:#fff;font-size:22px;font-weight:800;min-width:46px;height:40px;border-radius:20px;display:grid;place-items:center;padding:0 12px;font-variant-numeric:tabular-nums;transition:transform .25s}
+.noti-h .cnt b.bump{transform:scale(1.18)}
+.noti-list{position:relative;flex:1;padding:18px 22px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.noti-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);font-size:22px}
+.nt{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:18px;border:1px solid var(--line);border-radius:16px;background:#121823;padding:14px 20px;min-height:78px}
+.nt.in{animation:ntIn .5s var(--ease) both}
+@keyframes ntIn{from{opacity:0;transform:translateY(-22px) scale(.98)}to{opacity:1;transform:none}}
+.nt .ci{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:24px}
+.nt .ci.wa{background:rgba(52,211,153,.12);color:var(--green)}
+.nt .ci.call{background:rgba(242,109,109,.12);color:var(--red)}
+.nt .ci.mail{background:rgba(75,140,247,.12);color:var(--blue)}
+.nt .tx b{display:block;font-size:19px;font-weight:700}
+.nt .tx span{display:block;font-size:19px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:760px}
+.nt .h{font-size:16px;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* ============ 05 · ASÍ FUNCIONA ============ */
+.sub .chip{margin-left:10px;vertical-align:4px}
+.stepper{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:28px}
+.stp{display:flex;align-items:center;gap:12px;padding:10px 20px 10px 10px;border-radius:999px;border:1px solid var(--line);background:#0e131b;font-size:18px;font-weight:600;color:var(--muted);transition:all .35s var(--ease)}
+.stp i{font-style:normal;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#161d29;font-weight:800;font-size:16px;color:var(--muted);transition:all .35s}
+.stp.done{color:#c9d8f5}.stp.done i{background:rgba(37,99,235,.2);color:var(--blue3)}
+.stp.on{border-color:rgba(75,140,247,.7);color:#fff;background:rgba(37,99,235,.14);box-shadow:0 0 30px -8px rgba(37,99,235,.7)}
+.stp.on i{background:var(--blue2);color:#fff}
+.stp-sep{width:26px;height:2px;background:var(--line2)}
+.demo{position:relative;height:602px;margin-top:24px}
+
+.phone{position:absolute;left:24px;top:0;width:336px;height:602px;border-radius:48px;background:#070a10;border:10px solid #1b212c;
+  box-shadow:0 40px 90px -40px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.05);overflow:hidden}
+.phone .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:104px;height:26px;border-radius:14px;background:#000;z-index:3}
+.scr{position:absolute;inset:0;padding:52px 20px 20px;display:flex;flex-direction:column}
+.ph-top small{display:block;font-size:14px;color:var(--dim)}
+.ph-top b{display:block;font-size:22px;font-weight:800;margin-top:6px}
+.ph-top span{display:block;font-size:15px;color:var(--muted);margin-top:3px}
+.ph-btn{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.ph-btn .b1{height:52px;border-radius:14px;background:var(--app);color:#fff;font-weight:800;font-size:17px;display:grid;place-items:center}
+.ph-btn .b2{height:46px;border-radius:12px;border:1px solid var(--line2);display:grid;place-items:center;font-size:15px;color:var(--muted);font-weight:600}
+/* la cámara */
+.cam{position:relative;flex:1;margin-top:14px;border-radius:18px;background:#0b0f15;border:1px solid var(--line2);overflow:hidden;display:grid;place-items:center}
+.cam .shot{width:188px;height:252px;background:#eef1f5;border-radius:6px;transform:rotate(-4deg);padding:16px 14px;box-shadow:0 20px 40px -10px rgba(0,0,0,.8)}
+.cam .shot small{display:block;font-size:9px;font-weight:800;letter-spacing:.14em;color:#6b7280}
+.cam .shot b{display:block;font-size:13px;color:#1f2937;margin-top:4px}
+.cam .shot i{display:block;height:6px;border-radius:3px;background:#d7dce4;margin-top:9px}
+.cam .shot .tt{display:flex;justify-content:space-between;margin-top:16px;padding-top:8px;border-top:1px solid #d7dce4;font-size:12px;font-weight:800;color:#1f2937}
+.cam .k{position:absolute;width:28px;height:28px;border-color:rgba(255,255,255,.75);border-style:solid}
+.cam .k1{top:14px;left:14px;border-width:3px 0 0 3px}.cam .k2{top:14px;right:14px;border-width:3px 3px 0 0}
+.cam .k3{bottom:14px;left:14px;border-width:0 0 3px 3px}.cam .k4{bottom:14px;right:14px;border-width:0 3px 3px 0}
+.shutter{align-self:center;width:74px;height:74px;border-radius:50%;border:5px solid #fff;margin-top:16px;display:grid;place-items:center}
+.shutter i{width:54px;height:54px;border-radius:50%;background:#fff}
+/* leyendo, revisado, ahorro */
+.rd{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
+.rd .spin{width:86px;height:86px;border-radius:50%;border:6px solid rgba(75,140,247,.2);border-top-color:var(--blue);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rd b{font-size:21px;margin-top:10px}
+.rd span{font-size:15px;color:var(--muted)}
+.ok{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.ok .big{width:120px;height:120px;border-radius:50%;background:rgba(52,211,153,.14);border:2px solid rgba(52,211,153,.6);display:grid;place-items:center;font-size:58px;color:var(--green);
+  box-shadow:0 0 60px -10px rgba(52,211,153,.6)}
+.ok b{font-size:22px;margin-top:26px}
+.ok span{font-size:16px;color:var(--muted);margin-top:8px}
+.sv{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.sv small{font-size:15px;color:var(--muted)}
+.sv b{font-size:52px;font-weight:900;color:var(--green);letter-spacing:-.02em;white-space:nowrap}
+.sv span{font-size:16px;color:#cfe0ff;line-height:1.4}
+.doc-mini{margin-top:26px;border:1px solid var(--line2);border-radius:16px;background:#121823;padding:18px;display:flex;align-items:center;gap:14px}
+.doc-mini .ico{width:52px;height:52px;font-size:24px;border-radius:12px}
+.doc-mini b{display:block;font-size:17px}
+.doc-mini small{display:block;font-size:14px;color:var(--muted);margin-top:3px}
+
+/* la app */
+.pane{position:absolute;left:474px;top:0;width:1226px;height:602px}
+.appw{position:absolute;inset:0;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,#0f141c,#0b0f16);overflow:hidden;display:flex;flex-direction:column}
+.appw-h{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--line)}
+.appw-h .l{display:flex;align-items:center;gap:14px}
+.appw-h .lg{width:40px;height:40px;border-radius:10px;background:var(--app);display:grid;place-items:center;color:#fff;font-size:21px}
+.appw-h b{display:block;font-size:21px;font-weight:800}
+.appw-h small{display:block;font-size:15px;color:var(--muted);margin-top:2px}
+.appw-b{position:relative;flex:1}
+.view{position:absolute;inset:0;padding:22px 28px}
+.flds{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.fld{border:1px solid var(--line);border-radius:12px;background:#0d1219;padding:12px 18px;min-height:84px;transition:all .45s var(--ease)}
+.fld small{display:block;font-size:12px;font-weight:800;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+.fld b{display:block;font-size:21px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+.fld .why{display:block;font-size:14px;margin-top:4px}
+.fld.wait b{color:var(--dim);font-weight:500}
+.fld.doubt{border-color:rgba(245,182,74,.65);background:rgba(245,182,74,.09)}
+.fld.doubt .why{color:#ffd79a}
+.fld.fixed{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.08)}
+.fld.fixed .why{color:#9ff3cf}
+.app-act{position:absolute;left:28px;right:28px;bottom:22px;display:flex;align-items:center;justify-content:space-between}
+.app-act .note{font-size:17px;color:var(--muted)}
+.app-act .note b{color:var(--text)}
+.app-btn{height:50px;padding:0 28px;border-radius:12px;background:var(--app);color:#fff;font-weight:800;font-size:18px;display:inline-flex;align-items:center;gap:10px;opacity:.4;transition:all .4s}
+.app-btn.go{opacity:1;box-shadow:0 0 34px -6px rgba(16,185,129,.8)}
+.cmp{display:flex;flex-direction:column;gap:14px}
+.cmp-top{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cst{border:1px solid var(--line);border-radius:14px;background:#0d1219;padding:14px 20px}
+.cst small{display:block;font-size:14px;color:var(--muted)}
+.cst b{display:block;font-size:34px;font-weight:900;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cst.save{border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.08)}
+.cst.save b{color:var(--green)}
+.trs{display:flex;flex-direction:column;gap:8px}
+.tr{display:grid;grid-template-columns:1fr 140px 170px 160px;align-items:center;gap:14px;border:1px solid var(--line);border-radius:10px;background:#0d1219;padding:0 18px;height:46px;font-size:17px}
+.tr .p,.tr .s{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tr .p{color:var(--muted)}
+.tr .s{font-weight:800;color:var(--green)}
+.tr .tg{justify-self:end}
+.tr.best{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.08)}
+.tr.no{color:var(--dim)}.tr.no .s{color:var(--dim);font-weight:600}
+.tr.hd{background:none;border:0;height:22px;font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+.tr.hd .s{color:var(--dim);font-weight:800}
+.link3{position:absolute;left:360px;top:250px;width:114px;height:60px}
+.link3 svg{width:100%;height:100%;overflow:visible}
+.link3 .ln{fill:none;stroke:rgba(75,140,247,.85);stroke-width:2.5;stroke-dasharray:7 8;animation:flowL 1s linear infinite}
+@keyframes flowL{to{stroke-dashoffset:-30}}
+.link3 .pk{fill:var(--blue3);filter:drop-shadow(0 0 6px rgba(111,143,240,.9))}
+.link3 small{position:absolute;left:0;right:0;top:-8px;text-align:center;font-size:13px;font-weight:700;color:var(--blue3);letter-spacing:.06em}
+/* el PDF del asesor */
+.paper{position:absolute;left:203px;top:0;width:820px;height:602px;background:#f7f8fa;border-radius:10px;color:#111827;padding:0 0 30px;overflow:hidden;
+  box-shadow:0 40px 100px -30px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.08)}
+.paper .ph{display:flex;align-items:center;justify-content:space-between;background:var(--brand);color:#fff;padding:18px 36px}
+.paper .ph .nm{display:flex;align-items:center;gap:14px}
+.paper .ph .av{width:46px;height:46px;border-radius:10px;background:#fff;color:var(--brand);display:grid;place-items:center;font-size:24px}
+.paper .ph b{font-size:22px;font-weight:900}
+.paper .ph small{font-size:14px;opacity:.85}
+.paper .bd{padding:16px 36px 0}
+.paper .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.paper .meta div{background:#eef0f4;border-radius:8px;padding:8px 14px}
+.paper .meta small{display:block;font-size:11px;font-weight:800;letter-spacing:.14em;color:#6b7280;text-transform:uppercase}
+.paper .meta b{display:block;font-size:15px;margin-top:3px;white-space:nowrap}
+.paper .figs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.paper .figs div{border:1px solid #e3e6ec;border-radius:8px;padding:9px 14px}
+.paper .figs small{display:block;font-size:12px;color:#6b7280}
+.paper .figs b{display:block;font-size:28px;font-weight:900;margin-top:2px;white-space:nowrap}
+.paper .figs .sv2{border:2px solid var(--brand)}
+.paper .figs .sv2 b{color:var(--brand)}
+.paper h4{font-size:12px;font-weight:800;letter-spacing:.18em;color:var(--brand);text-transform:uppercase;margin-top:16px}
+.paper table{width:100%;border-collapse:collapse;margin-top:4px;font-size:15px}
+.paper td{padding:4px 0;border-bottom:1px solid #e5e7eb}
+.paper td.op{color:#6b7280;font-size:14px}
+.paper td:last-child{text-align:right;font-weight:700;white-space:nowrap}
+.paper tr.tt td{border-bottom:0;font-size:18px;font-weight:900;padding-top:8px}
+.paper .st{position:absolute;right:40px;bottom:26px;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800;color:#065f46;background:#e7f8f0;border-radius:999px;padding:9px 16px}
+
+/* ============ 07 · EN DIRECTO ============ */
+.fname{display:inline-block;font-size:15px;font-weight:700;color:#9aa3b3;background:#141a24;border:1px solid var(--line2);border-radius:8px;padding:6px 11px;margin-top:16px;letter-spacing:.01em;transition:all .45s var(--ease)}
+.c4.locks .card.unl .fname{color:#cfe0ff;background:rgba(37,99,235,.14);border-color:rgba(75,140,247,.45)}
+.c4.locks .card p{max-width:330px}
+</style>
+</head>
+<body>
+<!-- ============ ICONOS (estilo lineal). Uso: <svg class="i"><use href="#i-mic"/></svg> ============ -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+    <symbol id="i-msg" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-smart" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+    <symbol id="i-euro" viewBox="0 0 24 24"><path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></symbol>
+    <symbol id="i-git" viewBox="0 0 24 24"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+    <symbol id="i-headset" viewBox="0 0 24 24"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></symbol>
+    <symbol id="i-phone-x" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><path d="m16 2 6 6"/><path d="m22 2-6 6"/></symbol>
+  </defs>
+</svg>
+
+<div id="stage">
+  <div class="topline"><i id="progress"></i></div>
+  <img class="logo" alt="DominIA Academy" src="data:image/png;base64,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">
+
+  <!-- ===================================================== 01 · PORTADA -->
+  <section class="slide" id="s-portada" data-title="Portada">
+    <div class="live rise" style="--d:.05"><span class="dot pulse"></span>Clase en directo · DominIA Academy</div>
+    <h1 class="cover-title rise" style="--d:.12">Estudio<br><em>de ahorro</em></h1>
+    <p class="sub rise" style="--d:.28">De la factura de luz al estudio en PDF, <b>en menos de un minuto</b>.</p>
+    <div class="cover-obj pop" style="--d:.45">
+      <div class="doc bill">
+        <small>Factura de luz · septiembre</small>
+        <b>Marta Soler Vidal</b>
+        <div class="lines"><i></i><i></i><i></i></div>
+        <div class="amt"><span>Total</span><em>93,65&nbsp;€</em></div>
+      </div>
+      <div class="cover-arrow">
+        <div class="conn"><svg viewBox="0 0 130 34" preserveAspectRatio="none"><path class="ln" d="M6 17 H116"/><path class="hd" d="M110 10 L120 17 L110 24"/></svg></div>
+        <span>la app</span>
+      </div>
+      <div class="doc study">
+        <small>Estudio de ahorro</small>
+        <b>Asesoría Energética Demo</b>
+        <div class="lines"><i></i><i></i><i></i></div>
+        <div class="amt"><span>Ahorro al año</span><em>293,70&nbsp;€</em></div>
+      </div>
+    </div>
+    <div class="cover-cap rise" style="--d:.6"><b>Marta Soler</b> · su factura de septiembre <span class="chip">datos inventados</span></div>
+  </section>
+
+  <!-- ===================================================== 02 · UN DÍA DE LUCÍA -->
+  <section class="slide" id="s-dia" data-title="Un día de Lucía" data-steps="2">
+    <h2 class="h1 rise" style="--d:.05">Un día de <em>Lucía</em></h2>
+    <p class="sub rise" style="--d:.14">Asesora energética: cobra por cada contrato que cambia. <b>Las facturas le llegan por WhatsApp.</b></p>
+    <div class="m-grid">
+      <div class="m-left">
+        <div class="stat rise" style="--d:.24"><div class="ico"><svg class="i"><use href="#i-file"/></svg></div><div class="n">14</div><div class="l"><b>Facturas</b>por mirar en el móvil</div></div>
+        <div class="stat rise" style="--d:.32"><div class="ico"><svg class="i"><use href="#i-clock"/></svg></div><div class="n">40</div><div class="l"><b>Minutos</b>por estudio, en Excel</div></div>
+        <div class="stat rise" style="--d:.40"><div class="ico"><svg class="i"><use href="#i-users"/></svg></div><div class="n">6</div><div class="l"><b>Clientes</b>esperando su estudio</div></div>
+        <div class="m-call" data-step="2"><b>El que tarda, pierde.</b> Si el estudio llega en tres días, el cliente ya ha firmado con otro.<span class="chip">ejemplo ilustrativo</span></div>
+      </div>
+      <div class="noti rise" style="--d:.3">
+        <div class="noti-h">
+          <div class="t"><svg class="i"><use href="#i-bell"/></svg>Móvil de Lucía</div>
+          <div class="clk" id="notiClock">09:00</div>
+          <div class="cnt">sin contestar <b id="notiCount">0</b></div>
+        </div>
+        <div class="noti-list" id="notiList"><div class="noti-empty" id="notiEmpty">Todo tranquilo… por ahora</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 03 · DÓNDE SE PIERDE EL DINERO -->
+  <section class="slide" id="s-dinero" data-title="Dónde se pierde" data-steps="4">
+    <h2 class="h1 rise" style="--d:.05">¿Dónde se pierde el <em>dinero</em>?</h2>
+    <p class="sub rise" style="--d:.14">Clientes no le faltan. <b>Lo que se le va es el tiempo entre factura y estudio.</b></p>
+    <div class="cards c3">
+      <div class="card" data-step="1"><div class="ico"><svg class="i"><use href="#i-clock"/></svg></div><h3>Una tarde<br>de Excel</h3><p>Copiar a mano consumos y precios.<br><b>Menos clientes al día.</b></p></div>
+      <div class="card" data-step="2"><div class="ico"><svg class="i"><use href="#i-pencil"/></svg></div><h3>Una cifra<br>mal copiada</h3><p>El ahorro no cuadra con la factura.<br><b>Y el cliente ya no se fía.</b></p></div>
+      <div class="card" data-step="3"><div class="ico"><svg class="i"><use href="#i-msg"/></svg></div><h3>El cliente<br>se enfría</h3><p>Si el estudio tarda días,<br><b>firma con el primero que se lo manda</b>.</p></div>
+    </div>
+    <div class="band" data-step="4">
+      <div class="k">La pregunta</div>
+      <div class="t">¿Y si el estudio estuviera listo <b>antes de salir de casa del cliente</b>?</div>
+      <div class="pills"><span class="pill"><svg class="i"><use href="#i-calendar"/></svg>Días</span>→<span class="pill blue"><svg class="i"><use href="#i-zap"/></svg>Un minuto</span></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 04 · EL SISTEMA EN UNA FRASE -->
+  <section class="slide" id="s-idea" data-title="La idea" data-steps="4">
+    <h2 class="h1 rise" style="--d:.05">El sistema en una <em>frase</em></h2>
+    <p class="sub rise" style="--d:.14">Nadie teclea la factura. <b>Nadie hace cuentas a mano.</b></p>
+    <div class="idea">
+      <div class="card" data-step="1"><div class="ico"><svg class="i"><use href="#i-image"/></svg></div><h3>Sube la<br>factura</h3><p>En PDF o en una foto del móvil.<br><b>Sin teclear nada.</b></p></div>
+      <div class="conn" data-step="2"><svg viewBox="0 0 110 40" preserveAspectRatio="none"><path class="ln" d="M8 20 H96"/><path class="hd" d="M90 13 L100 20 L90 27"/></svg></div>
+      <div class="card" data-step="2"><div class="ico"><svg class="i"><use href="#i-sparkle"/></svg></div><h3>La IA<br>la lee</h3><p>Titular, CUPS, consumos y precios.<br><b>Lo dudoso, en ámbar.</b></p></div>
+      <div class="conn" data-step="3"><svg viewBox="0 0 110 40" preserveAspectRatio="none"><path class="ln" d="M8 20 H96"/><path class="hd" d="M90 13 L100 20 L90 27"/></svg></div>
+      <div class="card" data-step="3"><div class="ico"><svg class="i"><use href="#i-file"/></svg></div><h3>El estudio<br>sale solo</h3><p>Sus tarifas, de más a menos ahorro,<br><b>en un PDF con su marca</b>.</p></div>
+    </div>
+    <div class="band two" data-step="4">
+      <div class="k">La clave</div>
+      <div class="t">La IA solo lee la factura. <b>El dinero lo calcula la app, con cada operación a la vista.</b></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 05 · ASÍ FUNCIONA -->
+  <section class="slide" id="s-demo" data-title="Así funciona" data-steps="4">
+    <h2 class="h1 rise" style="--d:.05">Así funciona, <em>paso a paso</em></h2>
+    <p class="sub rise" style="--d:.14">La factura de Marta, <b>de la foto al PDF</b>.<span class="chip">datos inventados</span></p>
+    <div class="stepper rise" style="--d:.22">
+      <button class="stp" data-set="0"><i>1</i>La foto</button><span class="stp-sep"></span>
+      <button class="stp" data-set="1"><i>2</i>La IA lee</button><span class="stp-sep"></span>
+      <button class="stp" data-set="2"><i>3</i>Lucía revisa</button><span class="stp-sep"></span>
+      <button class="stp" data-set="3"><i>4</i>La app compara</button><span class="stp-sep"></span>
+      <button class="stp" data-set="4"><i>5</i>El PDF</button>
+    </div>
+    <div class="demo rise" style="--d:.3">
+      <div class="phone">
+        <div class="notch"></div>
+        <!-- 0 · la foto -->
+        <div class="scr" data-only="0">
+          <div class="ph-top"><small>‹ Estudios</small><b>Nuevo estudio</b><span>Haz una foto a la factura</span></div>
+          <div class="cam">
+            <span class="k k1"></span><span class="k k2"></span><span class="k k3"></span><span class="k k4"></span>
+            <div class="shot"><small>FACTURA DE LUZ</small><b>Marta Soler Vidal</b><i></i><i style="width:80%"></i><i></i><i style="width:65%"></i><i></i><div class="tt"><span>TOTAL</span><span>93,65&nbsp;€</span></div></div>
+          </div>
+          <div class="shutter"><i></i></div>
+        </div>
+        <!-- 1 · la IA lee -->
+        <div class="scr" data-only="1">
+          <div class="ph-top"><small>‹ Estudios</small><b>Leyendo la factura…</b><span>Unos segundos</span></div>
+          <div class="rd"><div class="spin"></div><b>21 datos leídos</b><span>1 conviene revisarlo</span></div>
+        </div>
+        <!-- 2 · revisado -->
+        <div class="scr" data-only="2">
+          <div class="ph-top"><small>‹ Estudios</small><b>Marta Soler Vidal</b></div>
+          <div class="ok"><div class="big"><svg class="i"><use href="#i-check"/></svg></div><b>Datos revisados</b><span>Lucía comprueba el consumo</span></div>
+          <div class="ph-btn"><div class="b1">Calcular</div></div>
+        </div>
+        <!-- 3 · el ahorro -->
+        <div class="scr" data-only="3">
+          <div class="ph-top"><small>‹ Estudios</small><b>Marta Soler Vidal</b></div>
+          <div class="sv"><small>Ahorro al año</small><b>293,70&nbsp;€</b><span>Con Kilovatia · Tarifa Única 24&nbsp;h</span></div>
+          <div class="ph-btn"><div class="b1">Descargar PDF</div></div>
+        </div>
+        <!-- 4 · el PDF -->
+        <div class="scr" data-only="4">
+          <div class="ph-top"><small>‹ Estudios</small><b>Estudio listo</b><span>Con la marca de Lucía</span></div>
+          <div class="doc-mini"><div class="ico"><svg class="i"><use href="#i-file"/></svg></div><div><b>estudio-marta-soler.pdf</b><small>Para mandárselo a Marta</small></div></div>
+          <div class="ph-btn"><div class="b1">Enviar por WhatsApp</div><div class="b2">Estado: Enviado</div></div>
+        </div>
+      </div>
+
+      <div class="link3" data-only="1">
+        <small>lee la factura</small>
+        <svg viewBox="0 0 114 60"><path id="lk3" class="ln" d="M4 30 H110"/><circle class="pk" r="5"><animateMotion dur="1.1s" repeatCount="indefinite"><mpath href="#lk3"/></animateMotion></circle></svg>
+      </div>
+
+      <div class="pane">
+        <div class="appw" data-only="0,1,2,3">
+          <div class="appw-h">
+            <div class="l"><div class="lg"><svg class="i"><use href="#i-zap"/></svg></div><div><b id="aTitle">Nuevo estudio</b><small id="aSub">Esperando la factura</small></div></div>
+            <span id="aStatus"></span>
+          </div>
+          <div class="appw-b">
+            <div class="view" id="vData">
+              <div class="flds" id="aFields"></div>
+              <div class="app-act"><div class="note" id="aNote"></div><div class="app-btn" id="aBtn">Calcular</div></div>
+            </div>
+            <div class="view" id="vCmp">
+              <div class="cmp">
+                <div class="cmp-top">
+                  <div class="cst"><small>Hoy paga</small><b>93,65&nbsp;€</b></div>
+                  <div class="cst"><small>Pagaría</small><b>69,51&nbsp;€</b></div>
+                  <div class="cst save"><small>Ahorro al año</small><b>293,70&nbsp;€</b></div>
+                </div>
+                <div class="trs">
+                  <div class="tr hd"><span>Tarifa</span><span class="p">Pagaría</span><span class="s">Ahorro al año</span><span></span></div>
+                  <div class="tr best"><span>Kilovatia · Tarifa Única 24&nbsp;h</span><span class="p">69,51&nbsp;€</span><span class="s">293,70&nbsp;€</span><span class="tg"><span class="chip green">Propuesta</span></span></div>
+                  <div class="tr"><span>Kilovatia · Tres Tramos</span><span class="p">69,96&nbsp;€</span><span class="s">288,23&nbsp;€</span><span></span></div>
+                  <div class="tr"><span>Cierzo Eléctrica · Noche</span><span class="p">72,82&nbsp;€</span><span class="s">253,43&nbsp;€</span><span></span></div>
+                  <div class="tr"><span>Albor Energía · Hogar Fijo</span><span class="p">74,16&nbsp;€</span><span class="s">237,13&nbsp;€</span><span></span></div>
+                  <div class="tr"><span>Cierzo Eléctrica · Estable</span><span class="p">76,59&nbsp;€</span><span class="s">207,56&nbsp;€</span><span></span></div>
+                  <div class="tr no"><span>Lumbre Energía · Clásica</span><span class="p">94,08&nbsp;€</span><span class="s">No ahorra</span><span></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="paper" data-only="4">
+          <div class="ph">
+            <div class="nm"><div class="av"><svg class="i"><use href="#i-zap"/></svg></div><div><b>Asesoría Energética Demo</b><br><small>Estudio de ahorro en tu factura de luz</small></div></div>
+            <small>14 oct 2026</small>
+          </div>
+          <div class="bd">
+            <div class="meta">
+              <div><small>Titular</small><b>Marta Soler Vidal</b></div>
+              <div><small>CUPS</small><b>ES0999…0015JY</b></div>
+              <div><small>Periodo</small><b>1–30 sept 2026</b></div>
+            </div>
+            <div class="figs">
+              <div><small>Hoy pagas</small><b>93,65&nbsp;€</b></div>
+              <div><small>Pagarías</small><b>69,51&nbsp;€</b></div>
+              <div class="sv2"><small>Te ahorras al año</small><b>293,70&nbsp;€</b></div>
+            </div>
+            <h4>Cómo se calcula · con Kilovatia · Tarifa Única 24&nbsp;h</h4>
+            <table>
+              <tr><td>Potencia en punta</td><td class="op">4,6 kW × 30 días × 0,090411&nbsp;€</td><td>12,48&nbsp;€</td></tr>
+              <tr><td>Potencia en valle</td><td class="op">4,6 kW × 30 días × 0,027397&nbsp;€</td><td>3,78&nbsp;€</td></tr>
+              <tr><td>Energía en punta</td><td class="op">96 kWh × 0,119&nbsp;€</td><td>11,42&nbsp;€</td></tr>
+              <tr><td>Energía en llano</td><td class="op">84 kWh × 0,119&nbsp;€</td><td>10,00&nbsp;€</td></tr>
+              <tr><td>Energía en valle</td><td class="op">130 kWh × 0,119&nbsp;€</td><td>15,47&nbsp;€</td></tr>
+              <tr><td>Financiación del bono social</td><td class="op">30 días × 0,024688&nbsp;€</td><td>0,74&nbsp;€</td></tr>
+              <tr><td>Impuesto eléctrico</td><td class="op">53,89&nbsp;€ × 5,11269632&nbsp;%</td><td>2,76&nbsp;€</td></tr>
+              <tr><td>Alquiler del contador</td><td class="op">El importe de la factura</td><td>0,80&nbsp;€</td></tr>
+              <tr><td>IVA</td><td class="op">57,45&nbsp;€ × 21&nbsp;%</td><td>12,06&nbsp;€</td></tr>
+              <tr class="tt"><td>Total</td><td></td><td>69,51&nbsp;€</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 06 · QUIÉN HACE QUÉ -->
+  <section class="slide" id="s-quien" data-title="Quién hace qué" data-steps="2">
+    <h2 class="h1 rise" style="--d:.05">Quién hace <em>qué</em></h2>
+    <p class="sub rise" style="--d:.14">La IA lee, la app calcula y la asesora decide. <b>Nadie se inventa un número.</b></p>
+    <div class="cards c3 rise" style="--d:.24;height:420px;margin-top:52px">
+      <button class="card" data-set="0"><div class="ico"><svg class="i"><use href="#i-sparkle"/></svg></div><h3>La IA</h3><div class="who">Lee</div><p>Copia lo que pone la factura.<br><b>Y avisa de lo que no ve claro.</b></p></button>
+      <button class="card" data-set="1"><div class="ico"><svg class="i"><use href="#i-euro"/></svg></div><h3>La app</h3><div class="who">Calcula</div><p>La fórmula de la factura, línea a línea.<br><b>Los impuestos se cambian en Ajustes.</b></p></button>
+      <button class="card" data-set="2"><div class="ico"><svg class="i"><use href="#i-user"/></svg></div><h3>Lucía</h3><div class="who">Decide</div><p>Revisa lo dudoso y elige la tarifa.<br><b>Y le manda el PDF a Marta.</b></p></button>
+    </div>
+    <div class="rband rise" style="--d:.34">
+      <div class="band" data-only="0"><div class="k">La IA lee</div><div class="pills"><span class="pill">Titular</span><span class="pill">CUPS</span><span class="pill">Potencias</span><span class="pill">Consumos</span><span class="pill">Precios</span></div><div class="t">Nunca calcula un importe.</div></div>
+      <div class="band" data-only="1"><div class="k">La app calcula</div><div class="pills"><span class="pill">Potencia</span><span class="pill">Energía</span><span class="pill">Impuesto eléctrico</span><span class="pill">IVA</span><span class="pill blue">Cada línea, con su operación</span></div><div></div></div>
+      <div class="band" data-only="2"><div class="k">Lucía decide</div><div class="pills"><span class="pill">Revisa</span><span class="pill">Elige la tarifa</span><span class="pill blue"><svg class="i"><use href="#i-file"/></svg>Manda el PDF</span><span class="pill">Sigue el estado</span></div><div></div></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 07 · EN DIRECTO (mapa de la demo) -->
+  <section class="slide" id="s-directo" data-title="En directo" data-steps="4">
+    <h2 class="h1 rise" style="--d:.05">Ahora, <em>en directo</em></h2>
+    <p class="sub rise" style="--d:.14">Cuatro documentos de ejemplo, uno por idea. <b>Están en la carpeta ejemplos.</b></p>
+    <div class="cards c4 locks rise" style="--d:.24" id="piezas">
+      <div class="card"><div class="lk"><svg class="i"><use href="#i-lock"/></svg></div><div class="ico"><svg class="i"><use href="#i-file"/></svg></div><h3>La factura</h3><p>De PDF a estudio:<br><b>293,70&nbsp;€ al año</b>.</p><span class="fname">factura-1-hogar.pdf</span></div>
+      <div class="card"><div class="lk"><svg class="i"><use href="#i-lock"/></svg></div><div class="ico"><svg class="i"><use href="#i-image"/></svg></div><h3>La foto</h3><p>Lo que no se lee claro<br><b>sale en ámbar</b>.</p><span class="fname">factura-3-foto.jpg</span></div>
+      <div class="card"><div class="lk"><svg class="i"><use href="#i-lock"/></svg></div><div class="ico"><svg class="i"><use href="#i-search"/></svg></div><h3>La sorpresa</h3><p>7,20&nbsp;€ de un servicio<br><b>que nadie le explicó</b>.</p><span class="fname">factura-2-con-mantenimiento.pdf</span></div>
+      <div class="card"><div class="lk"><svg class="i"><use href="#i-lock"/></svg></div><div class="ico"><svg class="i"><use href="#i-folder"/></svg></div><h3>El tarifario</h3><p>Propone <b>2 tarifas de 4</b><br>y descarta el resto.</p><span class="fname">tarifario-cierzo-electrica.pdf</span></div>
+    </div>
+    <div class="band rise" style="--d:.36">
+      <div class="k">El final</div>
+      <div class="t">Cambia el color en Ajustes y descarga otra vez el PDF: <b>ya es tu marca</b>.</div>
+      <div class="pills"><span class="pill blue"><svg class="i"><use href="#i-settings"/></svg>Ajustes</span></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 08 · A QUIÉN SE LA VENDES -->
+  <section class="slide" id="s-cliente" data-title="A quién se la vendes" data-steps="4">
+    <h2 class="h1 rise" style="--d:.05">¿A quién se la <em>vendes</em>?</h2>
+    <p class="sub rise" style="--d:.14">A quien gana dinero con cada estudio. <b>Y hay más de un nicho.</b></p>
+    <div class="cards c3">
+      <div class="card" data-step="1"><div class="ico"><svg class="i"><use href="#i-briefcase"/></svg></div><h3>Asesores<br>energéticos</h3><p>Cobran por contrato cambiado.<br><b>Más estudios, más firmas.</b></p></div>
+      <div class="card" data-step="2"><div class="ico"><svg class="i"><use href="#i-users"/></svg></div><h3>Asesorías<br>con equipo</h3><p>Varios asesores, una marca.<br><b>Un plan más caro.</b></p></div>
+      <div class="card" data-step="3"><div class="ico"><svg class="i"><use href="#i-globe"/></svg></div><h3>Otros<br>nichos</h3><p>Gas, telefonía o seguros:<br><b>el mismo motor, otro módulo</b>.</p></div>
+    </div>
+    <div class="band two" data-step="4">
+      <div class="k">La clave</div>
+      <div class="t">No vendes una IA. <b>Vendes más contratos firmados en menos tiempo.</b></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 09 · CUÁNTO CUESTA Y CUÁNTO SE COBRA -->
+  <section class="slide" id="s-numeros" data-title="Los números" data-steps="4">
+    <h2 class="h1 rise" style="--d:.05">Los <em>números</em></h2>
+    <p class="sub rise" style="--d:.14">Lo que te cuesta cada estudio y cómo lo cobras. <b>El margen está en el tiempo que ahorra.</b></p>
+    <div class="why">
+      <div class="wrow" data-step="1"><div class="no">01</div><div class="s"><b><i class="num" id="lecturas">1.000</i> facturas leídas por menos de 1&nbsp;$.</b><span>Con Claude Haiku 5.5, cada lectura tarda de 3 a 6 segundos.</span></div><div class="src">Prueba real con la app<br>14 oct 2026 · OpenRouter</div></div>
+      <div class="wrow" data-step="2"><div class="no">02</div><div class="s"><b>Una cuota al mes que se paga sola.</b><span>Con un contrato más al mes, al asesor ya le sale a cuenta.</span></div><div class="src">Por ejemplo, 49&nbsp;€ al mes<br>ejemplo ilustrativo</div></div>
+      <div class="wrow" data-step="3"><div class="no">03</div><div class="s"><b>Un alta para dejarla a su medida.</b><span>Su logo, sus colores y su catálogo de tarifas cargado.</span></div><div class="src">Un pago único<br>ejemplo ilustrativo</div></div>
+    </div>
+    <div class="band" data-step="4">
+      <div class="k">Marca blanca</div>
+      <div class="t">El nombre, el logo, los colores y los textos están <b>en un solo archivo</b>.</div>
+      <div class="pills"><span class="pill blue"><svg class="i"><use href="#i-file"/></svg>Otro nombre, otro producto</span></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 10 · LO QUE VIENE -->
+  <section class="slide" id="s-viene" data-title="Lo que viene" data-steps="5">
+    <h2 class="h1 rise" style="--d:.05">Lo que <em>viene</em></h2>
+    <p class="sub rise" style="--d:.14">La app ya hace el estudio. <b>Esto es lo que la hace crecer.</b></p>
+    <div class="cards c4">
+      <div class="card" data-step="1"><div class="ico"><svg class="i"><use href="#i-globe"/></svg></div><h3>Página de<br>captación</h3><p>El cliente sube su factura<br><b>y deja su contacto</b>.</p></div>
+      <div class="card" data-step="2"><div class="ico"><svg class="i"><use href="#i-briefcase"/></svg></div><h3>Negocios<br>(3.0TD)</h3><p>Bares, tiendas y talleres:<br><b>facturas más grandes</b>.</p></div>
+      <div class="card" data-step="3"><div class="ico"><svg class="i"><use href="#i-users"/></svg></div><h3>Equipos</h3><p>Varios asesores<br><b>con la misma cuenta</b>.</p></div>
+      <div class="card" data-step="4"><div class="ico"><svg class="i"><use href="#i-server"/></svg></div><h3>En internet</h3><p>En un servidor propio,<br><b>con su dominio</b>.</p></div>
+    </div>
+    <div class="band" data-step="5">
+      <div class="k">El final</div>
+      <div class="t">Hoy hace el estudio en un minuto. <b>Mañana, los clientes le llegan solos.</b></div>
+      <div class="pills"><span class="pill blue"><svg class="i"><use href="#i-zap"/></svg>Tu producto</span></div>
+    </div>
+  </section>
+
+  <div class="hud">
+    <div class="brand"><b>DominIA</b> · Estudio de Ahorro</div>
+    <div class="nav">
+      <div class="dots" id="dots"></div>
+      <button class="arrow" id="prevBtn" aria-label="Anterior">←</button>
+      <button class="arrow" id="nextBtn" aria-label="Siguiente">→</button>
+      <div class="count" id="count">01 / 01</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ ENGINE ============ */
+if (/[?&]captura/.test(location.search)) document.body.classList.add('captura');
+const stage = document.getElementById('stage');
+const slides = [...document.querySelectorAll('.slide')];
+const hooks = {};      // hooks[slideId](step, slideEl, entered)
+const leaves = {};     // leaves[slideId](slideEl)
+let cur = -1, step = 0;
+
+function fit(){
+  const s = Math.min(innerWidth/1920, innerHeight/1080);
+  stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+}
+function maxStep(sl){
+  let m = +(sl.dataset.steps || 0);
+  sl.querySelectorAll('[data-step]').forEach(e => m = Math.max(m, +e.dataset.step));
+  return m;
+}
+function render(entered){
+  const sl = slides[cur];
+  slides.forEach((s,i)=>{ s.classList.toggle('active', i===cur); s.classList.toggle('past', i<cur); });
+  sl.querySelectorAll('[data-step]').forEach(e => e.classList.toggle('on', +e.dataset.step <= step));
+  sl.querySelectorAll('[data-only]').forEach(e => e.classList.toggle('on', e.dataset.only.split(',').map(Number).includes(step)));
+  sl.dataset.cur = step;
+  if (hooks[sl.id]) hooks[sl.id](step, sl, entered);
+  document.getElementById('count').textContent = String(cur+1).padStart(2,'0') + ' / ' + String(slides.length).padStart(2,'0');
+  document.querySelectorAll('#dots button').forEach((b,i)=> b.classList.toggle('on', i===cur));
+  const total = slides.length - 1 || 1;
+  const frac = (cur + (maxStep(sl) ? step/(maxStep(sl)+1) : 0)) / total;
+  document.getElementById('progress').style.width = Math.min(100, frac*100) + '%';
+  history.replaceState(null, '', '#' + (cur+1) + (step ? '.' + step : ''));
+}
+function go(i, s=0){
+  i = Math.max(0, Math.min(slides.length-1, i));
+  const changed = i !== cur;
+  if (changed && cur >= 0 && leaves[slides[cur].id]) leaves[slides[cur].id](slides[cur]);
+  cur = i;
+  step = s === 'max' ? maxStep(slides[i]) : Math.max(0, Math.min(maxStep(slides[i]), s));
+  if (changed){ const sl = slides[i]; sl.classList.remove('enter'); void sl.offsetWidth; sl.classList.add('enter'); }
+  render(changed);
+}
+function setStep(s){ step = Math.max(0, Math.min(maxStep(slides[cur]), s)); render(false); }
+function next(){ step < maxStep(slides[cur]) ? setStep(step+1) : (cur < slides.length-1 && go(cur+1, 0)); }
+function prev(){ step > 0 ? setStep(step-1) : (cur > 0 && go(cur-1, 'max')); }
+
+addEventListener('keydown', e=>{
+  if (e.target.closest('input,textarea,[contenteditable]')) return;
+  const k = e.key;
+  if (['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(k)){ e.preventDefault(); next(); }
+  else if (['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(k)){ e.preventDefault(); prev(); }
+  else if (k==='Home') go(0);
+  else if (k==='End') go(slides.length-1);
+  else if (k==='f' || k==='F'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  else if (k==='h' || k==='H'){ document.body.classList.toggle('clean'); }
+  else if (/^[0-9]$/.test(k)){ go(k==='0' ? 9 : +k - 1); }
+});
+document.getElementById('nextBtn').onclick = next;
+document.getElementById('prevBtn').onclick = prev;
+const dots = document.getElementById('dots');
+slides.forEach((s,i)=>{ const b=document.createElement('button'); b.title=s.dataset.title||''; b.onclick=()=>go(i); dots.appendChild(b); });
+document.addEventListener('click', e=>{
+  const j = e.target.closest('[data-go]'); if (j) return go(+j.dataset.go - 1);
+  const t = e.target.closest('[data-set]'); if (t && slides[cur].contains(t)) setStep(+t.dataset.set);
+});
+addEventListener('resize', fit); fit();
+
+/* ============ SLIDE HOOKS ============ */
+const $ = id => document.getElementById(id);
+const CAPTURA = document.body.classList.contains('captura');   // en modo captura, las simulaciones muestran su estado final
+const ic = id => `<svg class="i"><use href="#${id}"/></svg>`;
+
+/* ---------- 02 · el móvil de Lucía no para ---------- */
+(function(){
+  const N = [
+    {c:'wa',   n:'Marta Soler',     t:'Te mando foto de la factura de la luz',     h:'09:10'},
+    {c:'wa',   n:'Bar La Esquina',  t:'Aquí van las dos últimas facturas',         h:'09:24'},
+    {c:'mail', n:'Hugo Castillo',   t:'Factura adjunta. ¿Me compensa cambiar?',    h:'09:41'},
+    {c:'call', n:'Llamada perdida', t:'Irene Pascual',                             h:'10:02'},
+    {c:'wa',   n:'Marta Soler',     t:'¿Ya sabes cuánto me ahorro?',               h:'10:15'},
+    {c:'wa',   n:'Elena Navarro',   t:'Me ha llamado otra comercializadora…',      h:'10:38'},
+    {c:'mail', n:'Andrés Molina',   t:'Te reenvío la factura del local',           h:'11:05'},
+    {c:'wa',   n:'Marta Soler',     t:'¿Me lo puedes mandar hoy?',                 h:'11:30'},
+    {c:'call', n:'Llamada perdida', t:'Bar La Esquina',                            h:'11:52'},
+    {c:'wa',   n:'Marta Soler',     t:'Bueno, ya me lo miras otro día',            h:'12:40'},
+  ];
+  const ICON = {wa:'i-msg', call:'i-phone-x', mail:'i-mail'};
+  let timers = [], shown = 0;
+  function add(i, anim){
+    const o = N[i], list = $('notiList');
+    const el = document.createElement('div');
+    el.className = 'nt' + (anim ? ' in' : '');
+    el.innerHTML = `<div class="ci ${o.c}">${ic(ICON[o.c])}</div><div class="tx"><b>${o.n}</b><span>${o.t}</span></div><div class="h">${o.h}</div>`;
+    $('notiEmpty').style.display = 'none';
+    list.insertBefore(el, list.children[1] || null);
+    const items = list.querySelectorAll('.nt'); if (items.length > 6) items[items.length-1].remove();
+    shown = i + 1;
+    const c = $('notiCount'); c.textContent = shown; c.classList.add('bump'); setTimeout(()=>c.classList.remove('bump'), 220);
+    $('notiClock').textContent = o.h;
+  }
+  function reset(){
+    timers.forEach(clearTimeout); timers = []; shown = 0;
+    $('notiList').querySelectorAll('.nt').forEach(n => n.remove());
+    $('notiEmpty').style.display = '';
+    $('notiCount').textContent = '0'; $('notiClock').textContent = '09:00';
+  }
+  hooks['s-dia'] = (s, sl, entered) => {
+    if (s === 0){ reset(); return; }
+    if (shown === 0 && !timers.length){
+      if (CAPTURA || (entered && s >= 2)) N.forEach((o,i) => add(i, false));
+      else N.forEach((o,i) => timers.push(setTimeout(() => add(i, true), 300 + i*720)));
+    }
+  };
+  leaves['s-dia'] = () => reset();
+})();
+
+/* ---------- 05 · así funciona: de la foto al PDF ---------- */
+(function(){
+  // Lo que lee la IA de la factura de Marta (la primera factura de ejemplo de la app).
+  const FIELDS = [
+    ['Titular', 'Marta Soler Vidal'],
+    ['CUPS', 'ES0999 1000 0000 0015 JY'],
+    ['Potencia contratada', '4,6 kW · 4,6 kW'],
+    ['Consumo (punta · llano · valle)', '96 · 84 · 130 kWh', 'doubt'],
+    ['Precio de la potencia', '0,123288 · 0,041096 €/kW día'],
+    ['Precio de la energía', '0,215 · 0,165 · 0,115 €/kWh'],
+    ['Días facturados', '30 días'],
+    ['Total de la factura', '93,65 €'],
+  ];
+  const STATUS = [
+    '<span class="chip"><span class="dot"></span>Sin datos</span>',
+    '<span class="chip amber"><span class="dot pulse"></span>1 dato a revisar</span>',
+    '<span class="chip green"><span class="dot"></span>Revisado</span>',
+    '<span class="chip green"><span class="dot"></span>Calculado</span>',
+  ];
+  function field([label, value, kind], s){
+    if (s === 0) return `<div class="fld wait"><small>${label}</small><b>…</b></div>`;
+    if (kind === 'doubt' && s === 1) return `<div class="fld doubt"><small>${label}</small><b>${value}</b><span class="why">⚠ La cifra del llano se ve borrosa: ¿84 o 94?</span></div>`;
+    if (kind === 'doubt') return `<div class="fld fixed"><small>${label}</small><b>${value}</b><span class="why">✓ Revisado por Lucía</span></div>`;
+    return `<div class="fld"><small>${label}</small><b>${value}</b></div>`;
+  }
+  hooks['s-demo'] = (s, sl) => {
+    sl.querySelectorAll('.stp').forEach((b, i) => { b.classList.toggle('on', i === s); b.classList.toggle('done', i < s); });
+    const v = Math.min(s, 3);
+    $('aFields').innerHTML = FIELDS.map(f => field(f, v)).join('');
+    $('aStatus').innerHTML = STATUS[v];
+    $('aTitle').textContent = v === 0 ? 'Nuevo estudio' : 'Marta Soler Vidal';
+    $('aSub').textContent = v === 0 ? 'Esperando la factura' : v === 3 ? 'Comparativa · 6 tarifas del catálogo' : 'Datos leídos de la factura';
+    $('aNote').innerHTML = v === 0 ? 'Lucía solo hace la foto. <b>Sin teclear nada.</b>' : v === 1 ? '<b>Lo dudoso, en ámbar.</b> Lucía lo mira con la factura al lado.' : '<b>Todo revisado.</b> Ya se puede calcular.';
+    $('aBtn').classList.toggle('go', v === 2);
+    $('vData').style.display = v === 3 ? 'none' : '';
+    $('vCmp').style.display = v === 3 ? '' : 'none';
+  };
+})();
+
+/* ---------- 06 · quién hace qué ---------- */
+hooks['s-quien'] = (s, sl) => {
+  sl.querySelectorAll('.card[data-set]').forEach(c => c.classList.toggle('sel', +c.dataset.set === s));
+};
+
+/* ---------- 07 · la demo en directo: cada caso se desbloquea al enseñarlo ---------- */
+hooks['s-directo'] = (s) => {
+  $('piezas').querySelectorAll('.card').forEach((c, i) => {
+    const u = i < s; c.classList.toggle('unl', u);
+    c.querySelector('.lk').innerHTML = ic(u ? 'i-check' : 'i-lock');
+  });
+};
+
+/* ---------- 09 · contador de facturas ---------- */
+(function(){
+  const TOTAL = 1000; let raf = null, done = false;
+  const fmt = n => n.toLocaleString('es-ES');
+  function run(){
+    cancelAnimationFrame(raf);
+    const el = $('lecturas');
+    if (CAPTURA){ el.textContent = fmt(TOTAL); done = true; return; }
+    const t0 = performance.now(), D = 1300;
+    const tick = t => { const k = Math.min(1, (t - t0) / D); el.textContent = fmt(Math.round(TOTAL * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(tick); else done = true; };
+    raf = requestAnimationFrame(tick);
+  }
+  hooks['s-numeros'] = (s) => {
+    if (s === 0){ cancelAnimationFrame(raf); done = false; $('lecturas').textContent = '0'; return; }
+    if (!done && s === 1) run(); else if (!done){ cancelAnimationFrame(raf); $('lecturas').textContent = fmt(TOTAL); done = true; }
+  };
+  leaves['s-numeros'] = () => { cancelAnimationFrame(raf); done = false; };
+})();
+
+/* ============ START ============ */
+(function(){
+  const m = location.hash.match(/^#(\d+)(?:\.(\d+))?/);
+  go(m ? +m[1]-1 : 0, m && m[2] ? +m[2] : 0);
+})();
+</script>
+</body>
+</html>
